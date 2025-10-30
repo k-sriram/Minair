@@ -61,17 +61,15 @@
     <!-- Time Display Section -->
     <section class="time-display">
         <div class="clock-container">
-            <button class="time-clock" id="utc-clock" data-timezone="UTC">
+            <button class="time-clock" id="utc-clock" data-timezone="utc">
                 <div class="time-label">UTC</div>
                 <div class="time-value" id="utc-time">--:--:--</div>
             </button>
-
-            <button class="time-clock" id="lst-clock" data-timezone="LST">
+            
+            <button class="time-clock" id="lst-clock" data-timezone="lst">
                 <div class="time-label">LST</div>
                 <div class="time-value" id="lst-time">--:--:--</div>
-            </button>
-
-            <button class="time-clock" id="local-clock" data-timezone="local">
+            </button>            <button class="time-clock" id="local-clock" data-timezone="local">
                 <div class="time-label">
                     <select id="timezone-select" class="timezone-dropdown">
                         <option value="UTC-12">UTC-12:00</option>

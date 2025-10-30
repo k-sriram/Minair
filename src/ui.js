@@ -82,10 +82,19 @@
     class TimeManager {
         constructor(locationManager) {
             this.locationManager = locationManager;
-            this.selectedTimeReference = 'local'; // 'utc', 'lst', 'local'
+            this.selectedTimeReference = this.loadTimeReference();
             this.currentTime = new Date();
             this.timezone = this.detectTimezone();
             this.startClock();
+        }
+
+        loadTimeReference() {
+            const saved = localStorage.getItem('minair-time-reference');
+            return saved || 'local';
+        }
+
+        saveTimeReference(reference) {
+            localStorage.setItem('minair-time-reference', reference);
         }
 
         detectTimezone() {
@@ -217,6 +226,7 @@
 
         setTimeReference(reference) {
             this.selectedTimeReference = reference;
+            this.saveTimeReference(reference);
             this.updateActiveClockIndicator();
         }
     }
