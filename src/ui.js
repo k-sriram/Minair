@@ -113,11 +113,14 @@
 
         startClock() {
             this.initializeTimezoneDropdown();
+            this.lstAccumulator = 0; // Track fractional LST seconds
             this.updateClocks();
+            
+            // Update all clocks every 100ms for smooth display
             setInterval(() => {
                 this.currentTime = new Date();
                 this.updateClocks();
-            }, 1000);
+            }, 100);
         }
 
         updateClocks() {
@@ -125,14 +128,21 @@
             const utcTime = this.currentTime.toUTCString().split(' ')[4];
             document.getElementById('utc-time').textContent = utcTime;
 
-            // Local Sidereal Time
-            const location = this.locationManager.getLocation();
-            const lstTime = this.calculateLST(this.currentTime, location.lon);
-            document.getElementById('lst-time').textContent = this.formatTime(lstTime);
-
             // Local Time (using selected timezone)
             const localTime = this.getTimeForSelectedTimezone();
             document.getElementById('local-time').textContent = localTime;
+
+            // Local Sidereal Time - accumulate at sidereal rate
+            // Sidereal rate: 1.00273790935 sidereal seconds per solar second
+            this.lstAccumulator += 0.1 * 1.00273790935; // 0.1 seconds at sidereal rate
+            
+            if (this.lstAccumulator >= 1.0) {
+                this.lstAccumulator -= 1.0;
+                // Calculate and update LST
+                const location = this.locationManager.getLocation();
+                const lstTime = this.calculateLST(this.currentTime, location.lon);
+                document.getElementById('lst-time').textContent = this.formatTime(lstTime);
+            }
 
             // Update active clock indicator
             this.updateActiveClockIndicator();
