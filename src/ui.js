@@ -393,6 +393,8 @@
                 <td class="cell-dec">${this.formatDec(target.dec)}</td>
                 <td class="cell-alt">--:--:--</td>
                 <td class="cell-az">--:--:--</td>
+                <td class="cell-ha">--h--m</td>
+                <td class="cell-airmass">--.--</td>
                 <td class="cell-rise">--:--</td>
                 <td class="cell-set">--:--</td>
                 <td class="form-row">
@@ -416,11 +418,36 @@
                 const row = rows[i];
                 if (!row) continue;
 
-                // Current alt/az only
+                // Current alt/az, hour angle, and airmass
                 try {
                     const altAz = astro.raDecToAltAz(target.ra, target.dec, now, loc.lat, loc.lon);
+
+                    // Calculate hour angle (LST - RA)
+                    const JD = astro.toJulianDate(now);
+                    const lst = astro.lstFromJulian(JD, loc.lon);
+                    let haHours = lst - target.ra;
+                    // Wrap to -12 to +12 hour range
+                    while (haHours > 12) haHours -= 24;
+                    while (haHours < -12) haHours += 24;
+
+                    // Calculate airmass using sec(z) approximation where z = 90° - altitude
+                    let airmass = '--';
+                    if (altAz.alt > 0) {
+                        const zenithAngle = 90 - altAz.alt;
+                        const zenithRad = zenithAngle * Math.PI / 180;
+                        airmass = 1 / Math.cos(zenithRad);
+
+                        // Use Kasten-Young formula for better accuracy at low altitudes
+                        if (altAz.alt < 60) {
+                            const altRad = altAz.alt * Math.PI / 180;
+                            airmass = 1 / (Math.sin(altRad) + 0.50572 * Math.pow(altAz.alt + 6.07995, -1.6364));
+                        }
+                    }
+
                     row.querySelector('.cell-alt').textContent = this.formatAngleDeg(altAz.alt);
                     row.querySelector('.cell-az').textContent = this.formatAngleDegUnsigned(altAz.az);
+                    row.querySelector('.cell-ha').textContent = this.formatHourAngle(haHours);
+                    row.querySelector('.cell-airmass').textContent = typeof airmass === 'number' ? airmass.toFixed(2) : '--';
                 } catch (e) {
                     // ignore
                 }
@@ -635,6 +662,16 @@
             }
 
             return `${sign}${deg.toString().padStart(2, '0')}:${min.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
+        }
+
+        // Format hour angle in hours and minutes (±HH:MM format)
+        formatHourAngle(hours) {
+            const sign = hours >= 0 ? '+' : '-';
+            const absHours = Math.abs(hours);
+            const h = Math.floor(absHours);
+            const m = Math.floor((absHours - h) * 60);
+
+            return `${sign}${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
         }
 
         // Format a Date to hh:mm (24-hour) in the selected time reference
