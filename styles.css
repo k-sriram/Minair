@@ -25,6 +25,15 @@
     --clock-hover: #e9ecef;
     --table-header-bg: #f8f9fa;
     --table-row-hover: #f8f9fa;
+    --error-bg: #f8d7da;
+    --error-text: #721c24;
+    --error-border: #f5c6cb;
+    --success-bg: #d4edda;
+    --success-text: #155724;
+    --success-border: #c3e6cb;
+    --info-bg: #d1ecf1;
+    --info-text: #0c5460;
+    --info-border: #bee5eb;
 }
 
 [data-theme="dark"] {
@@ -44,6 +53,15 @@
     --clock-hover: #404040;
     --table-header-bg: #2d2d2d;
     --table-row-hover: #2d2d2d;
+    --error-bg: #2d1b1b;
+    --error-text: #f5c6cb;
+    --error-border: #721c24;
+    --success-bg: #1b2d1b;
+    --success-text: #c3e6cb;
+    --success-border: #155724;
+    --info-bg: #1b2a2d;
+    --info-text: #bee5eb;
+    --info-border: #0c5460;
 }
 
 [data-theme="red"] {
@@ -63,6 +81,15 @@
     --clock-hover: #4d0000;
     --table-header-bg: #330000;
     --table-row-hover: #330000;
+    --error-bg: #330000;
+    --error-text: #ff8888;
+    --error-border: #660000;
+    --success-bg: #003300;
+    --success-text: #88ff88;
+    --success-border: #006600;
+    --info-bg: #001a33;
+    --info-text: #88ccff;
+    --info-border: #003366;
 }
 
 /* Base Styles */
@@ -367,6 +394,59 @@ body {
 
 #cancel-target-btn:hover {
     background-color: var(--border-color);
+}
+
+#lookup-target-btn {
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+}
+
+#lookup-target-btn:hover {
+    background-color: var(--bg-tertiary);
+}
+
+#lookup-target-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.lookup-message {
+    margin-top: 0.5rem;
+    padding: 0.75rem;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    animation: fadeIn 0.3s ease-in;
+}
+
+.lookup-message.error {
+    background-color: var(--error-bg);
+    color: var(--error-text);
+    border: 1px solid var(--error-border);
+}
+
+.lookup-message.success {
+    background-color: var(--success-bg);
+    color: var(--success-text);
+    border: 1px solid var(--success-border);
+}
+
+.lookup-message.info {
+    background-color: var(--info-bg);
+    color: var(--info-text);
+    border: 1px solid var(--info-border);
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* Responsive Design */

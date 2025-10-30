@@ -236,6 +236,7 @@
         constructor() {
             this.targets = [];
             this.loadDefaultTargets();
+            this._lastLookupTime = 0; // for rate-limiting external queries (ms)
         }
 
         async loadDefaultTargets() {
@@ -467,6 +468,89 @@
             await this.updateRiseSetTimes();
         }
 
+        // Rate-limit helper: ensure at least 100ms between external queries
+        async _rateLimitQuery() {
+            const minInterval = 100; // ms
+            const now = Date.now();
+            const since = now - (this._lastLookupTime || 0);
+            if (since < minInterval) {
+                await new Promise(r => setTimeout(r, minInterval - since));
+            }
+            this._lastLookupTime = Date.now();
+        }
+
+        // Lookup coordinates for an object name using CDS/SIMBAD services.
+        // Returns { raHours, decDeg }
+        async lookupCoordinates(name) {
+            if (!name || !name.trim()) throw new Error('Empty name');
+            await this._rateLimitQuery();
+
+            // First try CDS Sesame text resolver which often returns a '%J' line with J2000 decimal degrees
+            const sesameUrl = `https://cdsweb.u-strasbg.fr/cgi-bin/nph-sesame/-oI?${encodeURIComponent(name)}`;
+            try {
+                const res = await fetch(sesameUrl);
+                if (res.ok) {
+                    const txt = await res.text();
+                    const lines = txt.split(/\r?\n/);
+                    for (const line of lines) {
+                        // %J RA DEC (degrees)
+                        const m = line.match(/^%J\s+([+-]?[0-9\.Ee+-]+)\s+([+-]?[0-9\.Ee+-]+)/);
+                        if (m) {
+                            const raDeg = parseFloat(m[1]);
+                            const decDeg = parseFloat(m[2]);
+                            if (!isNaN(raDeg) && !isNaN(decDeg)) {
+                                return { raHours: raDeg / 15.0, decDeg };
+                            }
+                        }
+                    }
+                }
+            } catch (e) {
+                // ignore and try SIMBAD VOTABLE next
+                console.warn('Sesame lookup failed:', e);
+            }
+
+            // Second attempt: SIMBAD VOTABLE output (may be blocked by CORS in browsers)
+            const simbadUrl = `https://simbad.u-strasbg.fr/simbad/sim-id?Ident=${encodeURIComponent(name)}&output.format=VOTABLE`;
+            try {
+                const res2 = await fetch(simbadUrl);
+                if (res2.ok) {
+                    const xmlText = await res2.text();
+                    const parser = new DOMParser();
+                    const xml = parser.parseFromString(xmlText, 'application/xml');
+
+                    // Build field name -> index map
+                    const fields = Array.from(xml.querySelectorAll('FIELD')).map(f => ({ name: f.getAttribute('name') || '', id: f.getAttribute('ID') || '' }));
+                    let raIdx = -1, decIdx = -1;
+                    for (let i = 0; i < fields.length; i++) {
+                        const nm = (fields[i].name || fields[i].id || '').toLowerCase();
+                        if (nm.includes('ra') && raIdx === -1) raIdx = i;
+                        if (nm.includes('dec') && decIdx === -1) decIdx = i;
+                    }
+
+                    // Fallback: pick first two numeric TDs in first TR
+                    const firstTR = xml.querySelector('TR');
+                    if (firstTR) {
+                        const tds = Array.from(firstTR.querySelectorAll('TD'));
+                        if (raIdx >= 0 && decIdx >= 0 && tds.length > Math.max(raIdx, decIdx)) {
+                            const raVal = parseFloat(tds[raIdx].textContent);
+                            const decVal = parseFloat(tds[decIdx].textContent);
+                            if (!isNaN(raVal) && !isNaN(decVal)) return { raHours: raVal / 15.0, decDeg: decVal };
+                        }
+                        // Try scanning for two numeric columns
+                        const numeric = tds.map(td => parseFloat(td.textContent)).filter(n => !isNaN(n));
+                        if (numeric.length >= 2) {
+                            // Assume first is RA (deg) and second is Dec (deg)
+                            return { raHours: numeric[0] / 15.0, decDeg: numeric[1] };
+                        }
+                    }
+                }
+            } catch (e) {
+                console.warn('SIMBAD VOTABLE lookup failed:', e);
+            }
+
+            throw new Error('Unable to resolve object coordinates. Please check the object name and try again.');
+        }
+
         // Format azimuth without sign, 0-360 as dd:mm:ss
         formatAngleDegUnsigned(angle) {
             let a = angle % 360;
@@ -556,7 +640,7 @@
         // Format a Date to hh:mm (24-hour) in the selected time reference
         formatDateHHMM(date) {
             if (!date || !(date instanceof Date)) return '--:--';
-            
+
             const app = window.minairApp;
             if (!app || !app.timeManager) {
                 // Fallback to local time
@@ -564,17 +648,17 @@
                 const m = date.getMinutes().toString().padStart(2, '0');
                 return `${h}:${m}`;
             }
-            
+
             const convertedDate = this.convertDateToSelectedTimeReference(date, app.timeManager);
             const h = convertedDate.getHours().toString().padStart(2, '0');
             const m = convertedDate.getMinutes().toString().padStart(2, '0');
             return `${h}:${m}`;
         }
-        
+
         // Convert a Date to the selected time reference
         convertDateToSelectedTimeReference(date, timeManager) {
             const selectedRef = timeManager.selectedTimeReference;
-            
+
             if (selectedRef === 'utc') {
                 // Convert to UTC
                 return new Date(date.getTime());
@@ -589,16 +673,16 @@
             } else { // 'local' or selected timezone
                 const timezoneSelect = document.getElementById('timezone-select');
                 if (!timezoneSelect) return date;
-                
+
                 const selectedTimezone = timezoneSelect.value;
                 const match = selectedTimezone.match(/UTC([+-])(\d{1,2})(?::(\d{2}))?/);
                 if (!match) return date;
-                
+
                 const sign = match[1] === '+' ? 1 : -1;
                 const hours = parseInt(match[2]);
                 const minutes = parseInt(match[3] || '0');
                 const offsetMinutes = sign * (hours * 60 + minutes);
-                
+
                 // Calculate time in selected timezone
                 const utcTime = date.getTime();
                 const timezoneTime = new Date(utcTime + (offsetMinutes * 60000));
@@ -655,6 +739,38 @@
             document.getElementById('save-target-btn').addEventListener('click', () => {
                 this.saveNewTarget();
             });
+
+            // Lookup button for target name -> query SIMBAD/Sesame
+            const lookupBtn = document.getElementById('lookup-target-btn');
+            if (lookupBtn) {
+                lookupBtn.addEventListener('click', async () => {
+                    const name = document.getElementById('target-name').value.trim();
+                    if (!name) {
+                        this.showLookupMessage('Please enter a target name before lookup.', 'error');
+                        return;
+                    }
+                    try {
+                        lookupBtn.disabled = true;
+                        const origText = lookupBtn.textContent;
+                        lookupBtn.textContent = 'Looking...';
+                        const coords = await this.targetManager.lookupCoordinates(name);
+                        if (coords) {
+                            // coords: { raHours, decDeg }
+                            document.getElementById('target-ra').value = this.targetManager.formatRA(coords.raHours);
+                            document.getElementById('target-dec').value = this.targetManager.formatDec(coords.decDeg);
+                            this.showLookupMessage('Coordinates found and filled in.', 'success');
+                        } else {
+                            this.showLookupMessage('No coordinates found for "' + name + '". Please check the object name.', 'error');
+                        }
+                    } catch (err) {
+                        console.error('Lookup error:', err);
+                        this.showLookupMessage('Lookup failed: ' + err.message, 'error');
+                    } finally {
+                        lookupBtn.disabled = false;
+                        lookupBtn.textContent = 'Lookup';
+                    }
+                });
+            }
 
             document.getElementById('cancel-target-btn').addEventListener('click', () => {
                 this.hideAddTargetForm();
@@ -765,6 +881,27 @@
             document.getElementById('target-name').value = '';
             document.getElementById('target-ra').value = '';
             document.getElementById('target-dec').value = '';
+            this.hideLookupMessage();
+        }
+
+        showLookupMessage(message, type = 'info') {
+            const messageEl = document.getElementById('lookup-message');
+            messageEl.textContent = message;
+            messageEl.className = 'lookup-message ' + type;
+            messageEl.style.display = 'block';
+
+            // Auto-hide success and info messages after 5 seconds
+            if (type === 'success' || type === 'info') {
+                setTimeout(() => {
+                    this.hideLookupMessage();
+                }, 5000);
+            }
+        }
+
+        hideLookupMessage() {
+            const messageEl = document.getElementById('lookup-message');
+            messageEl.style.display = 'none';
+            messageEl.className = 'lookup-message';
         }
 
         saveNewTarget() {
