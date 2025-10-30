@@ -500,8 +500,6 @@
                         samples.push({ time: sampleTime, alt: altAz.alt, az: altAz.az });
                     }
 
-                    let rise = null, set = null;
-
                     console.log(`Debug ${target.name}: minAlt=${minAlt}°, samples=${samples.length}`);
                     if (samples.length > 0) {
                         const altRange = samples.map(s => s.alt);
@@ -513,35 +511,53 @@
                     const startsAbove = samples.length > 0 && samples[0].alt >= minAlt;
 
                     // Look for altitude crossings at the minimum altitude threshold
+                    const rises = [];
+                    const sets = [];
+
                     for (let j = 1; j < samples.length; j++) {
                         const prevAlt = samples[j - 1].alt;
                         const currAlt = samples[j].alt;
 
                         // Rise: upward crossing (below minAlt to above minAlt)
-                        if (prevAlt < minAlt && currAlt >= minAlt && !rise) {
+                        if (prevAlt < minAlt && currAlt >= minAlt) {
                             // Linear interpolation to get more precise crossing time
                             const ratio = (minAlt - prevAlt) / (currAlt - prevAlt);
                             const crossingTime = new Date(samples[j - 1].time.getTime() +
                                 ratio * (samples[j].time.getTime() - samples[j - 1].time.getTime()));
-                            rise = crossingTime;
-                            console.log(`  Rise found: ${prevAlt.toFixed(1)}° -> ${currAlt.toFixed(1)}° at ${this.formatDateHHMM(rise)}`);
+                            rises.push(crossingTime);
+                            console.log(`  Rise found: ${prevAlt.toFixed(1)}° -> ${currAlt.toFixed(1)}° at ${this.formatDateHHMM(crossingTime)}`);
                         }
 
                         // Set: downward crossing (above minAlt to below minAlt)
-                        // Allow set detection even if no rise was found (for objects already up at start)
-                        if (prevAlt >= minAlt && currAlt < minAlt && !set) {
+                        if (prevAlt >= minAlt && currAlt < minAlt) {
                             // Linear interpolation to get more precise crossing time
                             const ratio = (minAlt - prevAlt) / (currAlt - prevAlt);
                             const crossingTime = new Date(samples[j - 1].time.getTime() +
                                 ratio * (samples[j].time.getTime() - samples[j - 1].time.getTime()));
-                            set = crossingTime;
-                            console.log(`  Set found: ${prevAlt.toFixed(1)}° -> ${currAlt.toFixed(1)}° at ${this.formatDateHHMM(set)}`);
+                            sets.push(crossingTime);
+                            console.log(`  Set found: ${prevAlt.toFixed(1)}° -> ${currAlt.toFixed(1)}° at ${this.formatDateHHMM(crossingTime)}`);
                         }
                     }
 
-                    // If object starts above minimum but no rise found, it's visible from start of night
+                    // Determine the most relevant rise and set times for observation planning
+                    let rise = null, set = null;
+
+                    if (startsAbove) {
+                        // Object starts above threshold - use first set and next rise (if any)
+                        set = sets.length > 0 ? sets[0] : null;
+                        rise = rises.length > 0 ? rises[0] : null;
+                    } else {
+                        // Object starts below threshold - use first rise and next set (if any)
+                        rise = rises.length > 0 ? rises[0] : null;
+                        set = sets.length > 0 ? sets[0] : null;
+                    }
+
+                    // Log analysis of crossing patterns
+                    console.log(`  Found ${rises.length} rise(s) and ${sets.length} set(s) in 24h period`);
                     if (startsAbove && !rise) {
-                        console.log(`  Object starts above ${minAlt}° (visible from start of night)`);
+                        console.log(`  Object starts above ${minAlt}° and doesn't rise again during 24h period`);
+                    } else if (startsAbove && rise) {
+                        console.log(`  Object starts above ${minAlt}°, sets then rises again during 24h period`);
                     }
 
                     console.log(`  Final: rise=${rise ? this.formatDateHHMM(rise) : 'none'}, set=${set ? this.formatDateHHMM(set) : 'none'}`);
