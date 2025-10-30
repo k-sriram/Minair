@@ -401,13 +401,11 @@
             return row;
         }
 
-        // Compute and update current alt/az and rise/set times for targets
-        async updateTargetsObservingInfo() {
+        // Lightweight method to update only current alt/az for real-time tracking
+        async updateCurrentAltAz() {
             const tbody = document.getElementById('target-table-body');
             const rows = Array.from(tbody.querySelectorAll('tr'));
             const astro = window.MinairAstronomy;
-            const scheduler = window.MinairScheduler;
-            // use existing global app instance for location
             const app = window.minairApp;
             const loc = app ? app.locationManager.getLocation() : { lat: 51.4779, lon: -0.0015 };
             const now = new Date();
@@ -417,7 +415,7 @@
                 const row = rows[i];
                 if (!row) continue;
 
-                // Current alt/az
+                // Current alt/az only
                 try {
                     const altAz = astro.raDecToAltAz(target.ra, target.dec, now, loc.lat, loc.lon);
                     row.querySelector('.cell-alt').textContent = this.formatAngleDeg(altAz.alt);
@@ -425,6 +423,22 @@
                 } catch (e) {
                     // ignore
                 }
+            }
+        }
+
+        // Method to update rise/set times (less frequent updates)
+        async updateRiseSetTimes() {
+            const tbody = document.getElementById('target-table-body');
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+            const scheduler = window.MinairScheduler;
+            const app = window.minairApp;
+            const loc = app ? app.locationManager.getLocation() : { lat: 51.4779, lon: -0.0015 };
+            const now = new Date();
+
+            for (let i = 0; i < this.targets.length; i++) {
+                const target = this.targets[i];
+                const row = rows[i];
+                if (!row) continue;
 
                 // Rise/Set times: compute altitude curve with 1-minute sampling and detect crossings at 0°
                 try {
@@ -444,6 +458,13 @@
                     // ignore
                 }
             }
+        }
+
+        // Compute and update current alt/az and rise/set times for targets
+        async updateTargetsObservingInfo() {
+            // Update both alt/az and rise/set times
+            await this.updateCurrentAltAz();
+            await this.updateRiseSetTimes();
         }
 
         // Format azimuth without sign, 0-360 as dd:mm:ss
@@ -532,12 +553,57 @@
             return `${sign}${deg.toString().padStart(2, '0')}:${min.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
         }
 
-        // Format a Date to hh:mm (24-hour)
+        // Format a Date to hh:mm (24-hour) in the selected time reference
         formatDateHHMM(date) {
             if (!date || !(date instanceof Date)) return '--:--';
-            const h = date.getHours().toString().padStart(2, '0');
-            const m = date.getMinutes().toString().padStart(2, '0');
+            
+            const app = window.minairApp;
+            if (!app || !app.timeManager) {
+                // Fallback to local time
+                const h = date.getHours().toString().padStart(2, '0');
+                const m = date.getMinutes().toString().padStart(2, '0');
+                return `${h}:${m}`;
+            }
+            
+            const convertedDate = this.convertDateToSelectedTimeReference(date, app.timeManager);
+            const h = convertedDate.getHours().toString().padStart(2, '0');
+            const m = convertedDate.getMinutes().toString().padStart(2, '0');
             return `${h}:${m}`;
+        }
+        
+        // Convert a Date to the selected time reference
+        convertDateToSelectedTimeReference(date, timeManager) {
+            const selectedRef = timeManager.selectedTimeReference;
+            
+            if (selectedRef === 'utc') {
+                // Convert to UTC
+                return new Date(date.getTime());
+            } else if (selectedRef === 'lst') {
+                // For LST, we'll show the time as if it were local time but calculated as LST
+                // This is an approximation since LST doesn't directly map to clock time
+                const location = timeManager.locationManager.getLocation();
+                const lstHours = timeManager.calculateLST(date, location.lon);
+                const lstDate = new Date(date);
+                lstDate.setUTCHours(Math.floor(lstHours), Math.floor((lstHours % 1) * 60), 0, 0);
+                return lstDate;
+            } else { // 'local' or selected timezone
+                const timezoneSelect = document.getElementById('timezone-select');
+                if (!timezoneSelect) return date;
+                
+                const selectedTimezone = timezoneSelect.value;
+                const match = selectedTimezone.match(/UTC([+-])(\d{1,2})(?::(\d{2}))?/);
+                if (!match) return date;
+                
+                const sign = match[1] === '+' ? 1 : -1;
+                const hours = parseInt(match[2]);
+                const minutes = parseInt(match[3] || '0');
+                const offsetMinutes = sign * (hours * 60 + minutes);
+                
+                // Calculate time in selected timezone
+                const utcTime = date.getTime();
+                const timezoneTime = new Date(utcTime + (offsetMinutes * 60000));
+                return timezoneTime;
+            }
         }
     }
 
@@ -569,12 +635,16 @@
                 clock.addEventListener('click', (e) => {
                     const timeRef = e.currentTarget.dataset.timezone;
                     this.timeManager.setTimeReference(timeRef);
+                    // Time reference changed - update rise/set display
+                    this.targetManager.updateRiseSetTimes();
                 });
             });
 
             // Timezone selector
             document.getElementById('timezone-select').addEventListener('change', () => {
                 // Time will update on next clock tick
+                // Timezone changed - update rise/set display
+                this.targetManager.updateRiseSetTimes();
             });
 
             // Target management
@@ -598,6 +668,18 @@
             document.getElementById('longitude').addEventListener('change', () => {
                 this.updateCustomLocation();
             });
+
+            // Observation date changes
+            document.getElementById('observation-date').addEventListener('change', () => {
+                // Date changed - update rise/set times
+                this.targetManager.updateRiseSetTimes();
+            });
+
+            // Min altitude changes
+            document.getElementById('min-altitude').addEventListener('change', () => {
+                // Min altitude changed - update rise/set times
+                this.targetManager.updateRiseSetTimes();
+            });
         }
 
         initializeUI() {
@@ -608,14 +690,14 @@
             // Initialize location UI
             this.updateLocationUI();
 
-            // Periodically refresh observing info (alt/az, rise/set)
+            // Update alt/az every second for real-time tracking
             setInterval(() => {
                 try {
-                    this.targetManager.updateTargetsObservingInfo();
+                    this.targetManager.updateCurrentAltAz();
                 } catch (e) {
                     // ignore timing errors
                 }
-            }, 60000);
+            }, 1000);
         }
 
         handleLocationChange(value) {
@@ -629,6 +711,8 @@
             } else {
                 customLocation.style.display = 'none';
                 this.locationManager.setObservatory(value);
+                // Location changed - update rise/set times
+                this.targetManager.updateRiseSetTimes();
             }
         }
 
@@ -638,6 +722,8 @@
 
             if (!isNaN(lat) && !isNaN(lon)) {
                 this.locationManager.setLocation(lat, lon, 'Custom Location');
+                // Location changed - update rise/set times
+                this.targetManager.updateRiseSetTimes();
             }
         }
 
