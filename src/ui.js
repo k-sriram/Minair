@@ -731,13 +731,19 @@
                 this.targetManager.updateRiseSetTimes();
             });
 
-            // Target management
+            // Target management - Add button
             document.getElementById('add-target-btn').addEventListener('click', () => {
-                this.showAddTargetForm();
+                this.addNewTarget();
             });
 
-            document.getElementById('save-target-btn').addEventListener('click', () => {
-                this.saveNewTarget();
+            // Enter key handling for form inputs
+            ['target-name', 'target-ra', 'target-dec'].forEach(id => {
+                document.getElementById(id).addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        this.addNewTarget();
+                    }
+                });
             });
 
             // Lookup button for target name -> query SIMBAD/Sesame
@@ -772,9 +778,7 @@
                 });
             }
 
-            document.getElementById('cancel-target-btn').addEventListener('click', () => {
-                this.hideAddTargetForm();
-            });
+
 
             // Custom location inputs
             document.getElementById('latitude').addEventListener('change', () => {
@@ -867,21 +871,13 @@
             }
         }
 
-        showAddTargetForm() {
-            document.getElementById('add-target-form').style.display = 'block';
-            document.getElementById('target-name').focus();
-        }
-
-        hideAddTargetForm() {
-            document.getElementById('add-target-form').style.display = 'none';
-            this.clearAddTargetForm();
-        }
-
         clearAddTargetForm() {
             document.getElementById('target-name').value = '';
             document.getElementById('target-ra').value = '';
             document.getElementById('target-dec').value = '';
             this.hideLookupMessage();
+            // Focus back to target name for next entry
+            document.getElementById('target-name').focus();
         }
 
         showLookupMessage(message, type = 'info') {
@@ -904,19 +900,20 @@
             messageEl.className = 'lookup-message';
         }
 
-        saveNewTarget() {
+        addNewTarget() {
             const name = document.getElementById('target-name').value.trim();
             const ra = document.getElementById('target-ra').value.trim();
             const dec = document.getElementById('target-dec').value.trim();
 
             if (!name || !ra || !dec) {
-                alert('Please fill in all target fields.');
+                this.showLookupMessage('Please fill in all target fields.', 'error');
                 return;
             }
 
             try {
                 this.targetManager.addTarget(name, ra, dec);
-                this.hideAddTargetForm();
+                this.showLookupMessage('Target "' + name + '" added successfully.', 'success');
+                this.clearAddTargetForm();
                 // Trigger immediate update of observing info for the new target
                 setTimeout(() => {
                     this.targetManager.updateTargetsObservingInfo();
@@ -930,7 +927,7 @@
                 } else {
                     errorMessage += error.message;
                 }
-                alert(errorMessage);
+                this.showLookupMessage(errorMessage, 'error');
                 console.error('Target add error:', error);
             }
         }
