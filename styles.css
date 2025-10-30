@@ -1,3 +1,12 @@
+/* DSEG7 Classic Font */
+@font-face {
+    font-family: 'DSEG7';
+    src: url('./fonts/dseg7-classic-latin-400-normal.woff2') format('woff2');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
 /* CSS Variables for Theming */
 :root {
     /* Light Theme */
@@ -196,10 +205,11 @@ body {
 }
 
 .time-value {
-    font-size: 1.5rem;
-    font-weight: 300;
+    font-size: 1.625rem;
+    font-weight: normal;
     text-align: center;
-    font-family: 'SF Mono', Monaco, monospace;
+    font-family: 'DSEG7', 'SF Mono', Monaco, monospace;
+    letter-spacing: 0.05em;
 }
 
 .timezone-dropdown {
