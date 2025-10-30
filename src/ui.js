@@ -450,17 +450,41 @@
         formatAngleDegUnsigned(angle) {
             let a = angle % 360;
             if (a < 0) a += 360;
-            const deg = Math.floor(a);
-            const min = Math.floor((a - deg) * 60);
-            const sec = Math.floor(((a - deg) * 60 - min) * 60);
+            let deg = Math.floor(a);
+            let minutesFloat = (a - deg) * 60;
+            let min = Math.floor(minutesFloat);
+            let sec = Math.floor((minutesFloat - min) * 60);
+
+            // Handle seconds overflow due to floating-point precision
+            if (sec >= 60) {
+                sec -= 60;
+                min += 1;
+            }
+            if (min >= 60) {
+                min -= 60;
+                deg += 1;
+            }
+
             return `${deg.toString().padStart(2, '0')}:${min.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
         }
 
         formatRA(ra) {
             // ra is in decimal hours. Format: hh:mm:ss.ss (seconds with 2 decimals)
-            const hours = Math.floor(ra);
-            const minutes = Math.floor((ra - hours) * 60);
-            const seconds = ((ra - hours) * 60 - minutes) * 60;
+            let hours = Math.floor(ra);
+            let minutesFloat = (ra - hours) * 60;
+            let minutes = Math.floor(minutesFloat);
+            let seconds = (minutesFloat - minutes) * 60;
+
+            // Handle seconds overflow due to floating-point precision
+            if (seconds >= 60) {
+                seconds -= 60;
+                minutes += 1;
+            }
+            if (minutes >= 60) {
+                minutes -= 60;
+                hours += 1;
+            }
+
             return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toFixed(2).padStart(5, '0')}`;
         }
 
@@ -468,9 +492,21 @@
             // dec is in decimal degrees. Format: +dd:mm:ss.s (seconds with 1 decimal)
             const sign = dec >= 0 ? '+' : '-';
             const absDec = Math.abs(dec);
-            const degrees = Math.floor(absDec);
-            const minutes = Math.floor((absDec - degrees) * 60);
-            const seconds = ((absDec - degrees) * 60 - minutes) * 60;
+            let degrees = Math.floor(absDec);
+            let minutesFloat = (absDec - degrees) * 60;
+            let minutes = Math.floor(minutesFloat);
+            let seconds = (minutesFloat - minutes) * 60;
+
+            // Handle seconds overflow due to floating-point precision
+            if (seconds >= 60) {
+                seconds -= 60;
+                minutes += 1;
+            }
+            if (minutes >= 60) {
+                minutes -= 60;
+                degrees += 1;
+            }
+
             return `${sign}${degrees.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toFixed(1).padStart(4, '0')}`;
         }
 
@@ -478,9 +514,21 @@
         formatAngleDeg(angle) {
             const sign = angle >= 0 ? '+' : '-';
             const absA = Math.abs(angle);
-            const deg = Math.floor(absA);
-            const min = Math.floor((absA - deg) * 60);
-            const sec = Math.floor(((absA - deg) * 60 - min) * 60);
+            let deg = Math.floor(absA);
+            let minutesFloat = (absA - deg) * 60;
+            let min = Math.floor(minutesFloat);
+            let sec = Math.floor((minutesFloat - min) * 60);
+
+            // Handle seconds overflow due to floating-point precision
+            if (sec >= 60) {
+                sec -= 60;
+                min += 1;
+            }
+            if (min >= 60) {
+                min -= 60;
+                deg += 1;
+            }
+
             return `${sign}${deg.toString().padStart(2, '0')}:${min.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
         }
 
