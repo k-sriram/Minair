@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Minair — Observation Planner</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <header>
+        <h1>Minair — Observation Planner (Prototype)</h1>
+    </header>
+
+    <main>
+        <section id="controls">
+            <label>Latitude: <input id="lat" type="number" step="0.0001" value="51.4779">°</label>
+            <label>Longitude: <input id="lon" type="number" step="0.0001" value="-0.0015">°</label>
+            <label>Date: <input id="date" type="date"></label>
+            <label>Min altitude: <input id="minAlt" type="number" step="0.1" value="30">°</label>
+            <label>Step (min): <input id="step" type="number" value="5"></label>
+            <label>Target: <select id="targetSelect"></select></label>
+            <button id="calcBtn">Calculate Night</button>
+        </section>
+
+        <section id="results">
+            <div id="summary"></div>
+            <canvas id="altPlot" width="900" height="300"></canvas>
+            <div id="windows"></div>
+        </section>
+    </main>
+
+    <footer>
+        <small>Minair prototype — client-only. Data is local.</small>
+    </footer>
+
+    <script src="src/astronomy.js"></script>
+    <script src="src/scheduler.js"></script>
+    <script src="src/ui.js"></script>
+</body>
+
+</html>
