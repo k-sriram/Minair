@@ -37,6 +37,24 @@
     --info-border: #bee5eb;
     --shadow-light: rgba(0, 0, 0, 0.1);
     --shadow-medium: rgba(0, 0, 0, 0.15);
+
+    /* Target Line Colors for Light Theme */
+    --target-color-1: #e74c3c;
+    --target-color-2: #3498db;
+    --target-color-3: #2ecc71;
+    --target-color-4: #f39c12;
+    --target-color-5: #9b59b6;
+    --target-color-6: #1abc9c;
+    --target-color-7: #34495e;
+    --target-color-8: #e67e22;
+    --target-hover-1: #c0392b;
+    --target-hover-2: #2980b9;
+    --target-hover-3: #27ae60;
+    --target-hover-4: #d68910;
+    --target-hover-5: #8e44ad;
+    --target-hover-6: #16a085;
+    --target-hover-7: #2c3e50;
+    --target-hover-8: #d35400;
 }
 
 [data-theme="dark"] {
@@ -68,6 +86,24 @@
     --info-border: #0c5460;
     --shadow-light: rgba(0, 0, 0, 0.3);
     --shadow-medium: rgba(0, 0, 0, 0.4);
+
+    /* Target Line Colors for Dark Theme */
+    --target-color-1: #ff6b6b;
+    --target-color-2: #4ecdc4;
+    --target-color-3: #45b7d1;
+    --target-color-4: #ffa726;
+    --target-color-5: #ab47bc;
+    --target-color-6: #26c6da;
+    --target-color-7: #78909c;
+    --target-color-8: #ff8a65;
+    --target-hover-1: #ff5252;
+    --target-hover-2: #26a69a;
+    --target-hover-3: #2196f3;
+    --target-hover-4: #ff9800;
+    --target-hover-5: #9c27b0;
+    --target-hover-6: #00bcd4;
+    --target-hover-7: #607d8b;
+    --target-hover-8: #ff7043;
 }
 
 [data-theme="red"] {
@@ -99,6 +135,24 @@
     --info-border: #660000;
     --shadow-light: rgba(255, 68, 68, 0.2);
     --shadow-medium: rgba(255, 68, 68, 0.3);
+
+    /* Target Line Colors for Red/Night Vision Theme */
+    --target-color-1: #ff4444;
+    --target-color-2: #ff6666;
+    --target-color-3: #ff8888;
+    --target-color-4: #ffaaaa;
+    --target-color-5: #cc3333;
+    --target-color-6: #cc5555;
+    --target-color-7: #cc7777;
+    --target-color-8: #cc9999;
+    --target-hover-1: #ff2222;
+    --target-hover-2: #ff3333;
+    --target-hover-3: #ff5555;
+    --target-hover-4: #ff7777;
+    --target-hover-5: #cc1111;
+    --target-hover-6: #cc2222;
+    --target-hover-7: #cc4444;
+    --target-hover-8: #cc6666;
 }
 
 /* Base Styles */
@@ -418,19 +472,62 @@ input:-ms-input-placeholder {
 .graph-section {
     padding: 2rem;
     background-color: var(--bg-primary);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.graph-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1400px;
+    margin: 0 auto 1.5rem;
+}
+
+.graph-header h2 {
+    font-size: 1.5rem;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.graph-controls {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.toggle-btn {
+    background-color: var(--accent-color);
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.toggle-btn:hover {
+    background-color: var(--accent-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px var(--shadow-medium);
+}
+
+.toggle-btn:active {
+    transform: translateY(0);
 }
 
 .graph-container {
     max-width: 1400px;
     margin: 0 auto;
-    text-align: center;
+    padding: 1rem;
+    background-color: var(--bg-secondary);
+    border-radius: 8px;
+    box-shadow: 0 2px 8px var(--shadow-light);
 }
 
 #visibility-chart {
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    background-color: var(--bg-secondary);
-    box-shadow: 0 2px 8px var(--shadow-light);
+    max-width: 100%;
+    height: 400px;
 }
 
 /* Target Section */

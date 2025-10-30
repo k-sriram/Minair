@@ -122,8 +122,14 @@
 
     <!-- Visibility Graph Section -->
     <section class="graph-section">
-        <div class="graph-container">
-            <canvas id="visibility-chart" width="800" height="400"></canvas>
+        <div class="graph-header">
+            <h2>Altitude vs Time</h2>
+            <div class="graph-controls">
+                <button id="toggle-graph-btn" class="toggle-btn">Show Graph</button>
+            </div>
+        </div>
+        <div class="graph-container" id="graph-container" style="display: none;">
+            <canvas id="visibility-chart"></canvas>
         </div>
     </section>
 
@@ -169,6 +175,9 @@
         </div>
     </section>
 
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script
+        src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@2.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
     <script src="src/astronomy.js"></script>
     <script src="src/scheduler.js"></script>
     <script src="src/ui.js"></script>
