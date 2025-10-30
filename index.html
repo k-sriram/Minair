@@ -65,11 +65,11 @@
                 <div class="time-label">UTC</div>
                 <div class="time-value" id="utc-time">--:--:--</div>
             </button>
-            
+
             <button class="time-clock" id="lst-clock" data-timezone="lst">
                 <div class="time-label">LST</div>
                 <div class="time-value" id="lst-time">--:--:--</div>
-            </button>            <button class="time-clock" id="local-clock" data-timezone="local">
+            </button> <button class="time-clock" id="local-clock" data-timezone="local">
                 <div class="time-label">
                     <select id="timezone-select" class="timezone-dropdown">
                         <option value="UTC-12">UTC-12:00</option>
@@ -139,8 +139,8 @@
                 <thead>
                     <tr>
                         <th>Name</th>
-                        <th>RA (h:m:s)</th>
-                        <th>Dec (°:':\")</th>
+                        <th>RA</th>
+                        <th>Dec</th>
                         <th>Current Alt</th>
                         <th>Current Az</th>
                         <th>Rise Time</th>
@@ -158,8 +158,9 @@
         <div class="add-target-form" id="add-target-form" style="display: none;">
             <div class="form-row">
                 <input type="text" id="target-name" placeholder="Target Name" />
-                <input type="text" id="target-ra" placeholder="RA (h:m:s or decimal hours)" />
-                <input type="text" id="target-dec" placeholder="Dec (°:':\" or decimal degrees)" />
+                <input type="text" id="target-ra" placeholder="RA (12:34:56, 12h34m56s, 12 34 56, 123456, 185.25°)" />
+                <input type="text" id="target-dec"
+                    placeholder="Dec (+12:34:56, 12d34m56s, -12 34 56, +123456, -25.75°)" />
                 <button id="save-target-btn">Save</button>
                 <button id="cancel-target-btn">Cancel</button>
             </div>

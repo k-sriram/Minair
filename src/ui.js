@@ -124,7 +124,7 @@
             this.initializeTimezoneDropdown();
             this.lstAccumulator = 0; // Track fractional LST seconds
             this.updateClocks();
-            
+
             // Update all clocks every 100ms for smooth display
             setInterval(() => {
                 this.currentTime = new Date();
@@ -144,7 +144,7 @@
             // Local Sidereal Time - accumulate at sidereal rate
             // Sidereal rate: 1.00273790935 sidereal seconds per solar second
             this.lstAccumulator += 0.1 * 1.00273790935; // 0.1 seconds at sidereal rate
-            
+
             if (this.lstAccumulator >= 1.0) {
                 this.lstAccumulator -= 1.0;
                 // Calculate and update LST
@@ -160,22 +160,22 @@
         getTimeForSelectedTimezone() {
             const timezoneSelect = document.getElementById('timezone-select');
             if (!timezoneSelect) return this.currentTime.toLocaleTimeString([], { hour12: false });
-            
+
             const selectedTimezone = timezoneSelect.value;
-            
+
             // Parse the timezone offset (e.g., "UTC+5:30" -> +5.5 hours)
             const match = selectedTimezone.match(/UTC([+-])(\d{1,2})(?::(\d{2}))?/);
             if (!match) return this.currentTime.toLocaleTimeString([], { hour12: false });
-            
+
             const sign = match[1] === '+' ? 1 : -1;
             const hours = parseInt(match[2]);
             const minutes = parseInt(match[3] || '0');
             const offsetMinutes = sign * (hours * 60 + minutes);
-            
+
             // Calculate time in selected timezone
             const utcTime = this.currentTime.getTime() + (this.currentTime.getTimezoneOffset() * 60000);
             const timezoneTime = new Date(utcTime + (offsetMinutes * 60000));
-            
+
             return timezoneTime.toLocaleTimeString([], { hour12: false });
         }
 
@@ -244,6 +244,8 @@
                 const defaultTargets = await response.json();
                 this.targets = [...defaultTargets];
                 this.updateTargetTable();
+                // After populating table, compute current alt/az and rise/set for each target
+                this.updateTargetsObservingInfo();
             } catch (error) {
                 console.error('Failed to load default targets:', error);
             }
@@ -267,24 +269,109 @@
         }
 
         parseRA(raStr) {
-            // Handle both "h:m:s" and decimal hours format
-            if (typeof raStr === 'number') return raStr;
-            if (raStr.includes(':')) {
-                const parts = raStr.split(':').map(p => parseFloat(p));
-                return parts[0] + (parts[1] || 0) / 60 + (parts[2] || 0) / 3600;
-            }
-            return parseFloat(raStr);
+            return this.parseCoordinate(raStr, 'ha');
         }
 
         parseDec(decStr) {
-            // Handle both "d:m:s" and decimal degrees format
-            if (typeof decStr === 'number') return decStr;
-            if (decStr.includes(':')) {
-                const parts = decStr.split(':').map(p => parseFloat(p));
-                const sign = parts[0] < 0 ? -1 : 1;
-                return parts[0] + sign * ((parts[1] || 0) / 60 + (parts[2] || 0) / 3600);
+            return this.parseCoordinate(decStr, 'deg');
+        }
+
+        // Comprehensive coordinate parser that handles multiple formats
+        parseCoordinate(coordStr, default_unit) {
+            if (typeof coordStr === 'number') return coordStr;
+
+            // Clean up the input string - remove extra spaces and normalize
+            let cleaned = coordStr.toString().trim().replace(/\s+/g, ' ');
+
+            // Handle different format patterns
+            const patterns = [
+                // HMS/DMS with colons: "12:34:56.7" or "12:34:56"
+                /^([+-]?)([0-9]{1,3}):([0-9]{1,2}):([0-9]{1,2}(?:\.[0-9]+)?)$/,
+                // HM/DM with colons: "12:34" (partial format)
+                /^([+-]?)([0-9]{1,3}):([0-9]{1,2})$/,
+                // HMS/DMS with spaces: "12 34 56.7" or "12 34 56"
+                /^([+-]?)([0-9]{1,3})\s+([0-9]{1,2})\s+([0-9]{1,2}(?:\.[0-9]+)?)$/,
+                // HM/DM with spaces: "12 34" (partial format)
+                /^([+-]?)([0-9]{1,3})\s+([0-9]{1,2})$/,
+                // Compact format: "123456" or "123456.7"
+                /^([+-]?)([0-9]{2})([0-9]{2})([0-9]{2}(?:\.[0-9]+)?)$/,
+                // Compact partial format: "1234" (HHMM)
+                /^([+-]?)([0-9]{2})([0-9]{2})$/,
+                // With unit suffixes: "12h34m56s" or "12d34m56s"
+                /^([+-]?)([0-9]{1,3})[hd]([0-9]{1,2})m([0-9]{1,2}(?:\.[0-9]+)?)s$/,
+                // With unit suffixes (partial): "12h34m" or "12d34m"
+                /^([+-]?)([0-9]{1,3})[hd]([0-9]{1,2})m$/,
+                // With unit suffixes and spaces: "12h 34m 56s" or "12d 34m 56s"
+                /^([+-]?)([0-9]{1,3})[hd]\s*([0-9]{1,2})m\s*([0-9]{1,2}(?:\.[0-9]+)?)s$/,
+                // With unit suffixes and spaces (partial): "12h 34m" or "12d 34m"
+                /^([+-]?)([0-9]{1,3})[hd]\s*([0-9]{1,2})m$/,
+                // Pure decimal: "123.456" or "+123.456" or "-123.456"
+                /^([+-]?)([0-9]{1,3}(?:\.[0-9]+))$/
+            ];
+
+            // Try each pattern
+            for (const pattern of patterns) {
+                const match = cleaned.match(pattern);
+                if (match) {
+                    const sign = match[1] === '-' ? -1 : 1;
+
+                    if (pattern === patterns[10]) { // Pure decimal
+                        const decimal = parseFloat(match[2]);
+                        // Decimals are always interpreted as degrees
+                        if (default_unit === 'ha') {
+                            // For hour angles, convert degrees to hours
+                            return sign * (decimal / 15);
+                        } else { // deg
+                            // For degrees, already in degrees
+                            return sign * decimal;
+                        }
+                    } else {
+                        // HMS/DMS format (full or partial)
+                        const major = parseFloat(match[2]);
+                        const minor = parseFloat(match[3] || 0);
+                        const seconds = parseFloat(match[4] || 0);
+
+                        let result = Math.abs(major) + minor / 60 + seconds / 3600;
+
+                        // Handle the sign properly for negative degrees where major part is 0
+                        if (sign === -1 || (match[1] === '' && major === 0 && (minor > 0 || seconds > 0) && cleaned.startsWith('-'))) {
+                            result = -result;
+                        }
+
+                        // Check if we need unit conversion based on context and format
+                        if (default_unit === 'ha') {
+                            // If this looks like it was specified in degrees (d suffix or value > 24), convert to hours
+                            if (cleaned.includes('d') || result > 24) {
+                                result = result / 15;
+                            }
+                            // Result should be in hours for hour angles
+                            return result;
+                        } else { // deg
+                            // If this looks like it was specified in hours (h suffix or value <= 24), convert to degrees
+                            if (cleaned.includes('h') || (result <= 24 && !cleaned.includes('d'))) {
+                                result = result * 15;
+                            }
+                            // Result should be in degrees
+                            return result;
+                        }
+                    }
+                }
             }
-            return parseFloat(decStr);
+
+            // Fallback: try to parse as a simple number
+            const fallback = parseFloat(cleaned);
+            if (!isNaN(fallback)) {
+                // Decimals are always interpreted as degrees
+                if (default_unit === 'ha') {
+                    // For hour angles, convert degrees to hours
+                    return fallback / 15;
+                } else {
+                    // For degrees, already in degrees
+                    return fallback;
+                }
+            }
+
+            throw new Error(`Unable to parse coordinate: ${coordStr}`);
         }
 
         updateTargetTable() {
@@ -300,13 +387,13 @@
         createTargetRow(target) {
             const row = document.createElement('tr');
             row.innerHTML = `
-                <td>${target.name}</td>
-                <td>${this.formatRA(target.ra)}</td>
-                <td>${this.formatDec(target.dec)}</td>
-                <td>--°</td>
-                <td>--°</td>
-                <td>--:--</td>
-                <td>--:--</td>
+                <td class="cell-name">${target.name}</td>
+                <td class="cell-ra">${this.formatRA(target.ra)}</td>
+                <td class="cell-dec">${this.formatDec(target.dec)}</td>
+                <td class="cell-alt">--:--:--</td>
+                <td class="cell-az">--:--:--</td>
+                <td class="cell-rise">--:--</td>
+                <td class="cell-set">--:--</td>
                 <td>
                     <button onclick="minairApp.targetManager.removeTarget(${target.id})" style="background: #dc3545; color: white; border: none; padding: 0.25rem 0.5rem; border-radius: 3px; cursor: pointer;">Remove</button>
                 </td>
@@ -314,20 +401,95 @@
             return row;
         }
 
+        // Compute and update current alt/az and rise/set times for targets
+        async updateTargetsObservingInfo() {
+            const tbody = document.getElementById('target-table-body');
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+            const astro = window.MinairAstronomy;
+            const scheduler = window.MinairScheduler;
+            // use existing global app instance for location
+            const app = window.minairApp;
+            const loc = app ? app.locationManager.getLocation() : { lat: 51.4779, lon: -0.0015 };
+            const now = new Date();
+
+            for (let i = 0; i < this.targets.length; i++) {
+                const target = this.targets[i];
+                const row = rows[i];
+                if (!row) continue;
+
+                // Current alt/az
+                try {
+                    const altAz = astro.raDecToAltAz(target.ra, target.dec, now, loc.lat, loc.lon);
+                    row.querySelector('.cell-alt').textContent = this.formatAngleDeg(altAz.alt);
+                    row.querySelector('.cell-az').textContent = this.formatAngleDegUnsigned(altAz.az);
+                } catch (e) {
+                    // ignore
+                }
+
+                // Rise/Set times: compute altitude curve with 1-minute sampling and detect crossings at 0°
+                try {
+                    const t = scheduler.computeAltitudeCurve({ raHours: target.ra, decDeg: target.dec }, now, loc.lat, loc.lon, 1);
+                    const samples = t.samples || [];
+                    let rise = null, set = null;
+                    let inAbove = false, startIdx = null;
+                    for (let j = 0; j < samples.length; j++) {
+                        const ok = samples[j].alt >= 0;
+                        if (ok && !inAbove) { inAbove = true; startIdx = j; rise = samples[j].time; }
+                        if (!ok && inAbove) { set = samples[j - 1].time; inAbove = false; }
+                    }
+                    if (inAbove && !set && samples.length) set = samples[samples.length - 1].time;
+                    if (rise) row.querySelector('.cell-rise').textContent = this.formatDateHHMM(rise);
+                    if (set) row.querySelector('.cell-set').textContent = this.formatDateHHMM(set);
+                } catch (e) {
+                    // ignore
+                }
+            }
+        }
+
+        // Format azimuth without sign, 0-360 as dd:mm:ss
+        formatAngleDegUnsigned(angle) {
+            let a = angle % 360;
+            if (a < 0) a += 360;
+            const deg = Math.floor(a);
+            const min = Math.floor((a - deg) * 60);
+            const sec = Math.floor(((a - deg) * 60 - min) * 60);
+            return `${deg.toString().padStart(2, '0')}:${min.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
+        }
+
         formatRA(ra) {
+            // ra is in decimal hours. Format: hh:mm:ss.ss (seconds with 2 decimals)
             const hours = Math.floor(ra);
             const minutes = Math.floor((ra - hours) * 60);
-            const seconds = Math.floor(((ra - hours) * 60 - minutes) * 60);
-            return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            const seconds = ((ra - hours) * 60 - minutes) * 60;
+            return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toFixed(2).padStart(5, '0')}`;
         }
 
         formatDec(dec) {
+            // dec is in decimal degrees. Format: +dd:mm:ss.s (seconds with 1 decimal)
             const sign = dec >= 0 ? '+' : '-';
             const absDec = Math.abs(dec);
             const degrees = Math.floor(absDec);
             const minutes = Math.floor((absDec - degrees) * 60);
-            const seconds = Math.floor(((absDec - degrees) * 60 - minutes) * 60);
-            return `${sign}${degrees}°${minutes.toString().padStart(2, '0')}'${seconds.toString().padStart(2, '0')}"`;
+            const seconds = ((absDec - degrees) * 60 - minutes) * 60;
+            return `${sign}${degrees.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toFixed(1).padStart(4, '0')}`;
+        }
+
+        // Format an angle in decimal degrees to dd:mm:ss (seconds integer)
+        formatAngleDeg(angle) {
+            const sign = angle >= 0 ? '+' : '-';
+            const absA = Math.abs(angle);
+            const deg = Math.floor(absA);
+            const min = Math.floor((absA - deg) * 60);
+            const sec = Math.floor(((absA - deg) * 60 - min) * 60);
+            return `${sign}${deg.toString().padStart(2, '0')}:${min.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
+        }
+
+        // Format a Date to hh:mm (24-hour)
+        formatDateHHMM(date) {
+            if (!date || !(date instanceof Date)) return '--:--';
+            const h = date.getHours().toString().padStart(2, '0');
+            const m = date.getMinutes().toString().padStart(2, '0');
+            return `${h}:${m}`;
         }
     }
 
@@ -397,6 +559,15 @@
 
             // Initialize location UI
             this.updateLocationUI();
+
+            // Periodically refresh observing info (alt/az, rise/set)
+            setInterval(() => {
+                try {
+                    this.targetManager.updateTargetsObservingInfo();
+                } catch (e) {
+                    // ignore timing errors
+                }
+            }, 60000);
         }
 
         handleLocationChange(value) {
@@ -475,8 +646,20 @@
             try {
                 this.targetManager.addTarget(name, ra, dec);
                 this.hideAddTargetForm();
+                // Trigger immediate update of observing info for the new target
+                setTimeout(() => {
+                    this.targetManager.updateTargetsObservingInfo();
+                }, 100);
             } catch (error) {
-                alert('Error adding target. Please check your RA/Dec format.');
+                // Provide more specific error feedback based on the parsing error
+                let errorMessage = 'Error adding target: ';
+                if (error.message.includes('coordinate')) {
+                    errorMessage += 'Invalid coordinate format. ';
+                    errorMessage += 'Examples: 12:34:56, 12h34m56s, 12 34 56, 123456, or 185.25 (degrees)';
+                } else {
+                    errorMessage += error.message;
+                }
+                alert(errorMessage);
                 console.error('Target add error:', error);
             }
         }
