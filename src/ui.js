@@ -89,10 +89,30 @@
         }
 
         detectTimezone() {
-            return Intl.DateTimeFormat().resolvedOptions().timeZone;
+            const offset = new Date().getTimezoneOffset();
+            const hours = Math.floor(Math.abs(offset) / 60);
+            const minutes = Math.abs(offset) % 60;
+            const sign = offset <= 0 ? '+' : '-';
+
+            if (minutes === 0) {
+                return `UTC${sign}${hours}`;
+            } else {
+                return `UTC${sign}${hours}:${minutes.toString().padStart(2, '0')}`;
+            }
+        }
+
+        initializeTimezoneDropdown() {
+            const timezoneSelect = document.getElementById('timezone-select');
+            const detectedTimezone = this.detectTimezone();
+
+            // Set the dropdown to the detected timezone
+            if (timezoneSelect) {
+                timezoneSelect.value = detectedTimezone;
+            }
         }
 
         startClock() {
+            this.initializeTimezoneDropdown();
             this.updateClocks();
             setInterval(() => {
                 this.currentTime = new Date();

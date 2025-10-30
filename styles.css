@@ -9,6 +9,8 @@
     --border-color: #dee2e6;
     --accent-color: #0066cc;
     --accent-hover: #0052a3;
+    --clock-active-bg: #dee2e6;
+    --clock-active-hover: #ced4da;
     --header-bg: #ffffff;
     --clock-bg: #f8f9fa;
     --clock-hover: #e9ecef;
@@ -26,6 +28,8 @@
     --border-color: #404040;
     --accent-color: #4da6ff;
     --accent-hover: #3399ff;
+    --clock-active-bg: #525252;
+    --clock-active-hover: #666666;
     --header-bg: #1e1e1e;
     --clock-bg: #2d2d2d;
     --clock-hover: #404040;
@@ -43,6 +47,8 @@
     --border-color: #660000;
     --accent-color: #ff6666;
     --accent-hover: #ff5555;
+    --clock-active-bg: #660000;
+    --clock-active-hover: #800000;
     --header-bg: #1a0000;
     --clock-bg: #330000;
     --clock-hover: #4d0000;
@@ -174,8 +180,11 @@ body {
 
 .time-clock.active {
     border-color: var(--accent-color);
-    background-color: var(--accent-color);
-    color: white;
+    background-color: var(--clock-active-bg);
+}
+
+.time-clock.active:hover {
+    background-color: var(--clock-active-hover);
 }
 
 .time-label {
@@ -184,10 +193,6 @@ body {
     text-align: center;
     margin-bottom: 0.5rem;
     color: var(--text-secondary);
-}
-
-.time-clock.active .time-label {
-    color: white;
 }
 
 .time-value {
@@ -200,12 +205,18 @@ body {
 .timezone-dropdown {
     background: transparent;
     border: none;
-    color: inherit;
+    color: var(--text-secondary);
     font-size: inherit;
     font-weight: inherit;
     text-align: center;
     cursor: pointer;
     appearance: none;
+}
+
+
+.timezone-dropdown option {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
 }
 
 /* Graph Section */
