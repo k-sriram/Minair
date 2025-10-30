@@ -15,6 +15,7 @@
     --bg-tertiary: #e9ecef;
     --text-primary: #212529;
     --text-secondary: #6c757d;
+    --text-placeholder: #adb5bd;
     --border-color: #dee2e6;
     --accent-color: #0066cc;
     --accent-hover: #0052a3;
@@ -45,6 +46,7 @@
     --bg-tertiary: #2d2d2d;
     --text-primary: #ffffff;
     --text-secondary: #b3b3b3;
+    --text-placeholder: #666666;
     --border-color: #404040;
     --accent-color: #4da6ff;
     --accent-hover: #3399ff;
@@ -75,6 +77,7 @@
     --bg-tertiary: #330000;
     --text-primary: #ff4444;
     --text-secondary: #cc3333;
+    --text-placeholder: #882222;
     --border-color: #660000;
     --accent-color: #ff6666;
     --accent-hover: #ff5555;
@@ -188,6 +191,46 @@ body {
     background-color: var(--bg-tertiary);
     border-color: var(--accent-color);
     box-shadow: 0 0 0 3px var(--shadow-light);
+}
+
+/* Global placeholder styling for all inputs */
+input::placeholder {
+    color: var(--text-placeholder) !important;
+    opacity: 1 !important;
+}
+
+input::-webkit-input-placeholder {
+    color: var(--text-placeholder) !important;
+    opacity: 1 !important;
+}
+
+input::-moz-placeholder {
+    color: var(--text-placeholder) !important;
+    opacity: 1 !important;
+}
+
+input:-ms-input-placeholder {
+    color: var(--text-placeholder) !important;
+}
+
+/* Specific styling for setting group inputs */
+.setting-group input::placeholder {
+    color: var(--text-placeholder) !important;
+    opacity: 1 !important;
+}
+
+.setting-group input::-webkit-input-placeholder {
+    color: var(--text-placeholder) !important;
+    opacity: 1 !important;
+}
+
+.setting-group input::-moz-placeholder {
+    color: var(--text-placeholder) !important;
+    opacity: 1 !important;
+}
+
+.setting-group input:-ms-input-placeholder {
+    color: var(--text-placeholder) !important;
 }
 
 /* Custom Dropdown Styling */
