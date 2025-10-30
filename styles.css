@@ -411,6 +411,21 @@ body {
     cursor: not-allowed;
 }
 
+/* Add button should match the primary/save button styling and be theme-aware */
+#add-target-btn {
+    background-color: var(--accent-color);
+    color: white;
+}
+
+#add-target-btn:hover {
+    background-color: var(--accent-hover);
+}
+
+#add-target-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
 .lookup-message {
     margin-top: 0.5rem;
     padding: 0.75rem;
