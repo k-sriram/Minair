@@ -461,29 +461,96 @@
             const scheduler = window.MinairScheduler;
             const app = window.minairApp;
             const loc = app ? app.locationManager.getLocation() : { lat: 51.4779, lon: -0.0015 };
-            const now = new Date();
 
-            for (let i = 0; i < this.targets.length; i++) {
+            // Get observation date from UI (default to today if not set)
+            const obsDateInput = document.getElementById('observation-date');
+            const obsDateStr = obsDateInput ? obsDateInput.value : new Date().toISOString().split('T')[0];
+
+            // Calculate local noon (12:00) for the observation location
+            // We need to calculate the local time at the observation location, not the browser's timezone
+            const obsDate = new Date(obsDateStr + 'T12:00:00Z'); // Start with UTC noon
+
+            // Calculate the local time offset for the observation location
+            // Approximate: 1 hour per 15 degrees longitude, east positive
+            const localTimeOffsetHours = loc.lon / 15; // Hours offset from UTC
+            const localTimeOffsetMs = localTimeOffsetHours * 60 * 60 * 1000;
+
+            // Adjust to local noon at the observation location
+            const localNoon = new Date(obsDate.getTime() - localTimeOffsetMs);
+
+            console.log(`Using observation window: ${localNoon.toISOString()} to ${new Date(localNoon.getTime() + 24 * 60 * 60 * 1000).toISOString()} (24h from local noon)`);
+
+            // Get minimum altitude from UI (default to 0° if not set)
+            const minAltInput = document.getElementById('min-altitude');
+            const minAlt = minAltInput ? parseFloat(minAltInput.value) || 0 : 0; for (let i = 0; i < this.targets.length; i++) {
                 const target = this.targets[i];
                 const row = rows[i];
                 if (!row) continue;
 
-                // Rise/Set times: compute altitude curve with 1-minute sampling and detect crossings at 0°
+                // Rise/Set times: compute altitude curve for 24h from local noon
                 try {
-                    const t = scheduler.computeAltitudeCurve({ raHours: target.ra, decDeg: target.dec }, now, loc.lat, loc.lon, 1);
-                    const samples = t.samples || [];
-                    let rise = null, set = null;
-                    let inAbove = false, startIdx = null;
-                    for (let j = 0; j < samples.length; j++) {
-                        const ok = samples[j].alt >= 0;
-                        if (ok && !inAbove) { inAbove = true; startIdx = j; rise = samples[j].time; }
-                        if (!ok && inAbove) { set = samples[j - 1].time; inAbove = false; }
+                    // Create our own 24-hour sample array from local noon to local noon next day
+                    const samples = [];
+                    const stepMinutes = 1; // 1-minute resolution for better accuracy
+                    const astro = window.MinairAstronomy;
+
+                    for (let minutes = 0; minutes < 24 * 60; minutes += stepMinutes) {
+                        const sampleTime = new Date(localNoon.getTime() + minutes * 60000);
+                        const altAz = astro.raDecToAltAz(target.ra, target.dec, sampleTime, loc.lat, loc.lon);
+                        samples.push({ time: sampleTime, alt: altAz.alt, az: altAz.az });
                     }
-                    if (inAbove && !set && samples.length) set = samples[samples.length - 1].time;
-                    if (rise) row.querySelector('.cell-rise').textContent = this.formatDateHHMM(rise);
-                    if (set) row.querySelector('.cell-set').textContent = this.formatDateHHMM(set);
+
+                    let rise = null, set = null;
+
+                    console.log(`Debug ${target.name}: minAlt=${minAlt}°, samples=${samples.length}`);
+                    if (samples.length > 0) {
+                        const altRange = samples.map(s => s.alt);
+                        console.log(`  Alt range: ${Math.min(...altRange).toFixed(1)}° to ${Math.max(...altRange).toFixed(1)}°`);
+                        console.log(`  Time range: ${samples[0].time.toISOString()} to ${samples[samples.length - 1].time.toISOString()}`);
+                    }
+
+                    // Check if object starts above minimum altitude
+                    const startsAbove = samples.length > 0 && samples[0].alt >= minAlt;
+
+                    // Look for altitude crossings at the minimum altitude threshold
+                    for (let j = 1; j < samples.length; j++) {
+                        const prevAlt = samples[j - 1].alt;
+                        const currAlt = samples[j].alt;
+
+                        // Rise: upward crossing (below minAlt to above minAlt)
+                        if (prevAlt < minAlt && currAlt >= minAlt && !rise) {
+                            // Linear interpolation to get more precise crossing time
+                            const ratio = (minAlt - prevAlt) / (currAlt - prevAlt);
+                            const crossingTime = new Date(samples[j - 1].time.getTime() +
+                                ratio * (samples[j].time.getTime() - samples[j - 1].time.getTime()));
+                            rise = crossingTime;
+                            console.log(`  Rise found: ${prevAlt.toFixed(1)}° -> ${currAlt.toFixed(1)}° at ${this.formatDateHHMM(rise)}`);
+                        }
+
+                        // Set: downward crossing (above minAlt to below minAlt)
+                        // Allow set detection even if no rise was found (for objects already up at start)
+                        if (prevAlt >= minAlt && currAlt < minAlt && !set) {
+                            // Linear interpolation to get more precise crossing time
+                            const ratio = (minAlt - prevAlt) / (currAlt - prevAlt);
+                            const crossingTime = new Date(samples[j - 1].time.getTime() +
+                                ratio * (samples[j].time.getTime() - samples[j - 1].time.getTime()));
+                            set = crossingTime;
+                            console.log(`  Set found: ${prevAlt.toFixed(1)}° -> ${currAlt.toFixed(1)}° at ${this.formatDateHHMM(set)}`);
+                        }
+                    }
+
+                    // If object starts above minimum but no rise found, it's visible from start of night
+                    if (startsAbove && !rise) {
+                        console.log(`  Object starts above ${minAlt}° (visible from start of night)`);
+                    }
+
+                    console.log(`  Final: rise=${rise ? this.formatDateHHMM(rise) : 'none'}, set=${set ? this.formatDateHHMM(set) : 'none'}`);
+
+                    // Update display
+                    row.querySelector('.cell-rise').textContent = rise ? this.formatDateHHMM(rise) : '--:--';
+                    row.querySelector('.cell-set').textContent = set ? this.formatDateHHMM(set) : '--:--';
                 } catch (e) {
-                    // ignore
+                    console.error(`Rise/set calculation error for ${target.name}:`, e);
                 }
             }
         }
@@ -695,34 +762,40 @@
         // Convert a Date to the selected time reference
         convertDateToSelectedTimeReference(date, timeManager) {
             const selectedRef = timeManager.selectedTimeReference;
+            const location = timeManager.locationManager.getLocation();
 
+            // Step 1: Convert the input date to correct UTC time (accounting for longitude)
+            // The input date is the actual UTC time when rise/set occurs at the observation location
+            const longitudeOffsetHours = location.lon / 15; // Hours offset from UTC (east positive)
+            const longitudeOffsetMs = longitudeOffsetHours * 60 * 60 * 1000;
+            const correctUtcTime = new Date(date.getTime() - longitudeOffsetMs);
+
+            // Step 2: Convert from correct UTC to the selected time reference
             if (selectedRef === 'utc') {
-                // Convert to UTC
-                return new Date(date.getTime());
+                // Show the correct UTC time
+                return correctUtcTime;
             } else if (selectedRef === 'lst') {
-                // For LST, we'll show the time as if it were local time but calculated as LST
-                // This is an approximation since LST doesn't directly map to clock time
+                // Convert UTC time to LST at the observation location
                 const location = timeManager.locationManager.getLocation();
-                const lstHours = timeManager.calculateLST(date, location.lon);
-                const lstDate = new Date(date);
+                const lstHours = timeManager.calculateLST(correctUtcTime, location.lon);
+                const lstDate = new Date(correctUtcTime);
                 lstDate.setUTCHours(Math.floor(lstHours), Math.floor((lstHours % 1) * 60), 0, 0);
                 return lstDate;
             } else { // 'local' or selected timezone
                 const timezoneSelect = document.getElementById('timezone-select');
-                if (!timezoneSelect) return date;
+                if (!timezoneSelect) return correctUtcTime;
 
                 const selectedTimezone = timezoneSelect.value;
                 const match = selectedTimezone.match(/UTC([+-])(\d{1,2})(?::(\d{2}))?/);
-                if (!match) return date;
+                if (!match) return correctUtcTime;
 
                 const sign = match[1] === '+' ? 1 : -1;
                 const hours = parseInt(match[2]);
                 const minutes = parseInt(match[3] || '0');
                 const offsetMinutes = sign * (hours * 60 + minutes);
 
-                // Calculate time in selected timezone
-                const utcTime = date.getTime();
-                const timezoneTime = new Date(utcTime + (offsetMinutes * 60000));
+                // Convert from UTC to selected timezone
+                const timezoneTime = new Date(correctUtcTime.getTime() + (offsetMinutes * 60000));
                 return timezoneTime;
             }
         }
