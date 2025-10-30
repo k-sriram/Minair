@@ -1,39 +1,151 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Minair — Observation Planner</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minair — Astronomical Observation Planning</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 
 <body>
-    <header>
-        <h1>Minair — Observation Planner (Prototype)</h1>
+    <!-- Header Banner -->
+    <header class="header-banner">
+        <div class="header-content">
+            <div class="settings-left">
+                <div class="setting-group">
+                    <label for="location-select">Location:</label>
+                    <select id="location-select">
+                        <option value="custom">Custom Location</option>
+                        <option value="greenwich">Greenwich, UK</option>
+                        <option value="mauna-kea">Mauna Kea, Hawaii</option>
+                        <option value="atacama">Atacama Desert, Chile</option>
+                        <option value="palomar">Palomar Observatory, CA</option>
+                    </select>
+                </div>
+                <div class="setting-group custom-location" id="custom-location">
+                    <input type="text" id="latitude" placeholder="Latitude" />
+                    <input type="text" id="longitude" placeholder="Longitude" />
+                </div>
+            </div>
+
+            <h1 class="site-title">Minair</h1>
+
+            <div class="settings-right">
+                <div class="setting-group">
+                    <label for="observation-date">Date:</label>
+                    <input type="date" id="observation-date" />
+                </div>
+                <div class="setting-group">
+                    <label for="min-altitude">Min Alt (°):</label>
+                    <input type="number" id="min-altitude" value="30" min="0" max="90" />
+                </div>
+                <div class="setting-group">
+                    <label for="theme-select">Theme:</label>
+                    <select id="theme-select">
+                        <option value="light">Light</option>
+                        <option value="dark">Dark</option>
+                        <option value="red">Night Vision</option>
+                    </select>
+                </div>
+            </div>
+        </div>
     </header>
 
-    <main>
-        <section id="controls">
-            <label>Latitude: <input id="lat" type="number" step="0.0001" value="51.4779">°</label>
-            <label>Longitude: <input id="lon" type="number" step="0.0001" value="-0.0015">°</label>
-            <label>Date: <input id="date" type="date"></label>
-            <label>Min altitude: <input id="minAlt" type="number" step="0.1" value="30">°</label>
-            <label>Step (min): <input id="step" type="number" value="5"></label>
-            <label>Target: <select id="targetSelect"></select></label>
-            <button id="calcBtn">Calculate Night</button>
-        </section>
+    <!-- Time Display Section -->
+    <section class="time-display">
+        <div class="clock-container">
+            <button class="time-clock" id="utc-clock" data-timezone="UTC">
+                <div class="time-label">UTC</div>
+                <div class="time-value" id="utc-time">--:--:--</div>
+            </button>
 
-        <section id="results">
-            <div id="summary"></div>
-            <canvas id="altPlot" width="900" height="300"></canvas>
-            <div id="windows"></div>
-        </section>
-    </main>
+            <button class="time-clock" id="lst-clock" data-timezone="LST">
+                <div class="time-label">LST</div>
+                <div class="time-value" id="lst-time">--:--:--</div>
+            </button>
 
-    <footer>
-        <small>Minair prototype — client-only. Data is local.</small>
-    </footer>
+            <button class="time-clock" id="local-clock" data-timezone="local">
+                <div class="time-label">
+                    <select id="timezone-select" class="timezone-dropdown">
+                        <option value="auto">Auto Detect</option>
+                        <option value="UTC-12">UTC-12:00</option>
+                        <option value="UTC-11">UTC-11:00</option>
+                        <option value="UTC-10">UTC-10:00</option>
+                        <option value="UTC-9">UTC-09:00</option>
+                        <option value="UTC-8">UTC-08:00</option>
+                        <option value="UTC-7">UTC-07:00</option>
+                        <option value="UTC-6">UTC-06:00</option>
+                        <option value="UTC-5">UTC-05:00</option>
+                        <option value="UTC-4">UTC-04:00</option>
+                        <option value="UTC-3">UTC-03:00</option>
+                        <option value="UTC-2">UTC-02:00</option>
+                        <option value="UTC-1">UTC-01:00</option>
+                        <option value="UTC+0">UTC+00:00</option>
+                        <option value="UTC+1">UTC+01:00</option>
+                        <option value="UTC+2">UTC+02:00</option>
+                        <option value="UTC+3">UTC+03:00</option>
+                        <option value="UTC+4">UTC+04:00</option>
+                        <option value="UTC+5">UTC+05:00</option>
+                        <option value="UTC+6">UTC+06:00</option>
+                        <option value="UTC+7">UTC+07:00</option>
+                        <option value="UTC+8">UTC+08:00</option>
+                        <option value="UTC+9">UTC+09:00</option>
+                        <option value="UTC+10">UTC+10:00</option>
+                        <option value="UTC+11">UTC+11:00</option>
+                        <option value="UTC+12">UTC+12:00</option>
+                    </select>
+                </div>
+                <div class="time-value" id="local-time">--:--:--</div>
+            </button>
+        </div>
+    </section>
+
+    <!-- Visibility Graph Section -->
+    <section class="graph-section">
+        <div class="graph-container">
+            <canvas id="visibility-chart" width="800" height="400"></canvas>
+        </div>
+    </section>
+
+    <!-- Target Management Section -->
+    <section class="target-section">
+        <div class="target-header">
+            <h2>Observation Targets</h2>
+            <button id="add-target-btn" class="add-target-btn">+ Add Target</button>
+        </div>
+
+        <div class="target-table-container">
+            <table class="target-table" id="target-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>RA (h:m:s)</th>
+                        <th>Dec (°:':\")</th>
+                        <th>Current Alt</th>
+                        <th>Current Az</th>
+                        <th>Rise Time</th>
+                        <th>Set Time</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="target-table-body">
+                    <!-- Target rows will be populated here -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Add Target Form (Initially Hidden) -->
+        <div class="add-target-form" id="add-target-form" style="display: none;">
+            <div class="form-row">
+                <input type="text" id="target-name" placeholder="Target Name" />
+                <input type="text" id="target-ra" placeholder="RA (h:m:s or decimal hours)" />
+                <input type="text" id="target-dec" placeholder="Dec (°:':\" or decimal degrees)" />
+                <button id="save-target-btn">Save</button>
+                <button id="cancel-target-btn">Cancel</button>
+            </div>
+        </div>
+    </section>
 
     <script src="src/astronomy.js"></script>
     <script src="src/scheduler.js"></script>
