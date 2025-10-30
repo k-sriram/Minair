@@ -105,6 +105,193 @@
         return altAz.alt;
     }
 
+    // Time Coordination Class
+    class TimeCoordinator {
+        constructor(observationLat, observationLon, userTimezoneOffset = null) {
+            this.observationLat = observationLat;
+            this.observationLon = observationLon;
+            // userTimezoneOffset in minutes from UTC (e.g., -300 for UTC-5, +330 for UTC+5:30)
+            this.userTimezoneOffset = userTimezoneOffset || (new Date().getTimezoneOffset() * -1);
+        }
+
+        // Update location when user changes it
+        setLocation(lat, lon) {
+            this.observationLat = lat;
+            this.observationLon = lon;
+        }
+
+        // Update user timezone when they change it
+        setUserTimezone(offsetMinutes) {
+            this.userTimezoneOffset = offsetMinutes;
+        }
+
+        // Parse timezone string like "UTC+5:30" to offset in minutes
+        parseTimezoneString(timezoneStr) {
+            const match = timezoneStr.match(/UTC([+-])(\d{1,2})(?::(\d{2}))?/);
+            if (!match) return 0;
+
+            const sign = match[1] === '+' ? 1 : -1;
+            const hours = parseInt(match[2]);
+            const minutes = parseInt(match[3] || '0');
+            return sign * (hours * 60 + minutes);
+        }
+
+        convertLSTtoUTC(lstTime) {
+            const lstHours = this.extractLSTHours(lstTime);
+
+            // Convert LST to GMST by subtracting longitude
+            const gmstHours = wrapHours(lstHours - (this.observationLon / 15));
+
+            // Find the Julian Date that corresponds to this GMST
+            // This is an iterative approximation since we need to invert the GMST formula
+            const baseDate = new Date(lstTime);
+            baseDate.setUTCHours(0, 0, 0, 0);
+            let bestJD = toJulianDate(baseDate);
+            let bestError = Math.abs(gmstFromJulian(bestJD) - gmstHours);
+
+            // Search within ±1 day with 1-minute precision
+            for (let offsetMinutes = -1440; offsetMinutes <= 1440; offsetMinutes += 1) {
+                const testJD = bestJD + (offsetMinutes / 1440); // Convert minutes to days
+                const testGMST = gmstFromJulian(testJD);
+                const error = Math.abs(wrapHours(testGMST - gmstHours));
+                const wrappedError = Math.min(error, 24 - error); // Handle wrap-around
+
+                if (wrappedError < bestError) {
+                    bestError = wrappedError;
+                    bestJD = testJD;
+                }
+            }
+
+            // Convert Julian Date back to UTC time
+            utcTime = new Date((bestJD - 2440587.5) * 86400000);
+            return utcTime;
+        }
+
+        convertUTCtoLST(utcTime) {
+            const JD = toJulianDate(utcTime);
+            const lstHours = lstFromJulian(JD, this.observationLon);
+            // Create a date representing LST (preserve the date but set time to LST)
+            const lstDate = this.createLSTTime(lstHours, new Date());
+            return lstDate;
+        }
+
+        // CORE CONVERSION: From any time representation to Local Solar Time at observation location
+        // This is the "true" time for astronomical calculations
+        toLocalSolarTime(time, timeType = 'utc') {
+            let utcTime;
+
+            switch (timeType) {
+                case 'utc':
+                    utcTime = new Date(time.getTime());
+                    break;
+                case 'user':
+                    // Convert from user timezone to UTC
+                    utcTime = new Date(time.getTime() - (this.userTimezoneOffset * 60000));
+                    break;
+                case 'local':
+                    // time is already local solar time at observation location
+                    return new Date(time.getTime());
+                case 'lst':
+                    // Convert LST back to UTC
+                    // Extract LST hours from the date
+                    utcTime = this.convertLSTtoUTC(time);
+                    break;
+                default:
+                    utcTime = new Date(time.getTime());
+            }
+
+            // Convert UTC to local solar time at observation location
+            const longitudeOffsetMinutes = this.observationLon * 4; // 4 minutes per degree
+            return new Date(utcTime.getTime() + (longitudeOffsetMinutes * 60000));
+        }
+
+
+        // Convert Local Solar Time to other time representations
+        fromLocalSolarTime(localSolarTime, targetType = 'utc') {
+            // First convert local solar time back to UTC
+            const longitudeOffsetMinutes = this.observationLon * 4; // 4 minutes per degree
+            const utcTime = new Date(localSolarTime.getTime() - (longitudeOffsetMinutes * 60000));
+
+            switch (targetType) {
+                case 'utc':
+                    return utcTime;
+                case 'user':
+                    // Convert UTC to user timezone
+                    return new Date(utcTime.getTime() + (this.userTimezoneOffset * 60000));
+                case 'local':
+                    return new Date(localSolarTime.getTime());
+                case 'lst':
+                    // Convert UTC to LST at observation location
+                    const lstDate = this.convertUTCtoLST(utcTime);
+                    return lstDate;
+                default:
+                    return utcTime;
+            }
+        }
+
+
+        // Get current time in any representation
+        now(timeType = 'utc') {
+            const currentUTC = new Date();
+            const localSolarTime = this.toLocalSolarTime(currentUTC, 'utc');
+            return this.fromLocalSolarTime(localSolarTime, timeType);
+        }
+
+        // Create a time series in local solar time for calculations
+        createTimeSeriesLocal(startTime, endTime, stepMinutes, inputTimeType = 'utc') {
+            const startLocal = this.toLocalSolarTime(startTime, inputTimeType);
+            const endLocal = this.toLocalSolarTime(endTime, inputTimeType);
+
+            const series = [];
+            let currentTime = new Date(startLocal);
+
+            while (currentTime <= endLocal) {
+                series.push(new Date(currentTime));
+                currentTime = new Date(currentTime.getTime() + stepMinutes * 60000);
+            }
+
+            return series;
+        }
+
+        // Convert a local solar time series to display time series
+        convertSeriesForDisplay(localSolarTimeSeries, targetTimeType = 'utc') {
+            return localSolarTimeSeries.map(localTime =>
+                this.fromLocalSolarTime(localTime, targetTimeType)
+            );
+        }
+
+        // Create an LST time from hours (for input purposes)
+        createLSTTime(lstHours) {
+            const lstDate = new Date();
+            const lstHoursInt = Math.floor(lstHours);
+            const lstMinutes = Math.floor((lstHours - lstHoursInt) * 60);
+            const lstSeconds = Math.floor(((lstHours - lstHoursInt) * 60 - lstMinutes) * 60);
+            lstDate.setUTCHours(lstHoursInt, lstMinutes, lstSeconds, 0);
+            return lstDate;
+        }
+
+        // Extract LST hours from an LST Date object
+        extractLSTHours(lstDate) {
+            return lstDate.getUTCHours() + lstDate.getUTCMinutes() / 60 + lstDate.getUTCSeconds() / 3600;
+        }
+
+        // Helper: Format time type for display
+        getTimeTypeLabel(timeType, userTimezoneStr = null) {
+            switch (timeType) {
+                case 'utc':
+                    return 'Time (UTC)';
+                case 'user':
+                    return userTimezoneStr ? `Time (${userTimezoneStr})` : 'Time (Local)';
+                case 'local':
+                    return 'Time (Local Solar)';
+                case 'lst':
+                    return 'Time (LST)';
+                default:
+                    return 'Time';
+            }
+        }
+    }
+
     // Expose API
     global.MinairAstronomy = {
         toJulianDate,
@@ -112,6 +299,7 @@
         lstFromJulian,
         raDecToAltAz,
         sunRaDec,
-        sunAltitude
+        sunAltitude,
+        TimeCoordinator
     };
 })(window);
