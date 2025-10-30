@@ -130,12 +130,34 @@
             const lstTime = this.calculateLST(this.currentTime, location.lon);
             document.getElementById('lst-time').textContent = this.formatTime(lstTime);
 
-            // Local Time
-            const localTime = this.currentTime.toLocaleTimeString([], { hour12: false });
+            // Local Time (using selected timezone)
+            const localTime = this.getTimeForSelectedTimezone();
             document.getElementById('local-time').textContent = localTime;
 
             // Update active clock indicator
             this.updateActiveClockIndicator();
+        }
+
+        getTimeForSelectedTimezone() {
+            const timezoneSelect = document.getElementById('timezone-select');
+            if (!timezoneSelect) return this.currentTime.toLocaleTimeString([], { hour12: false });
+            
+            const selectedTimezone = timezoneSelect.value;
+            
+            // Parse the timezone offset (e.g., "UTC+5:30" -> +5.5 hours)
+            const match = selectedTimezone.match(/UTC([+-])(\d{1,2})(?::(\d{2}))?/);
+            if (!match) return this.currentTime.toLocaleTimeString([], { hour12: false });
+            
+            const sign = match[1] === '+' ? 1 : -1;
+            const hours = parseInt(match[2]);
+            const minutes = parseInt(match[3] || '0');
+            const offsetMinutes = sign * (hours * 60 + minutes);
+            
+            // Calculate time in selected timezone
+            const utcTime = this.currentTime.getTime() + (this.currentTime.getTimezoneOffset() * 60000);
+            const timezoneTime = new Date(utcTime + (offsetMinutes * 60000));
+            
+            return timezoneTime.toLocaleTimeString([], { hour12: false });
         }
 
         calculateLST(date, longitude) {
@@ -318,6 +340,11 @@
                     const timeRef = e.currentTarget.dataset.timezone;
                     this.timeManager.setTimeReference(timeRef);
                 });
+            });
+
+            // Timezone selector
+            document.getElementById('timezone-select').addEventListener('change', () => {
+                // Time will update on next clock tick
             });
 
             // Target management
