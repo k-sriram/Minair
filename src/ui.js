@@ -131,7 +131,7 @@
             document.getElementById('lst-time').textContent = this.formatTime(lstTime);
 
             // Local Time
-            const localTime = this.currentTime.toLocaleTimeString();
+            const localTime = this.currentTime.toLocaleTimeString([], { hour12: false });
             document.getElementById('local-time').textContent = localTime;
 
             // Update active clock indicator
