@@ -34,6 +34,8 @@
     --info-bg: #d1ecf1;
     --info-text: #0c5460;
     --info-border: #bee5eb;
+    --shadow-light: rgba(0, 0, 0, 0.1);
+    --shadow-medium: rgba(0, 0, 0, 0.15);
 }
 
 [data-theme="dark"] {
@@ -62,6 +64,8 @@
     --info-bg: #1b2a2d;
     --info-text: #bee5eb;
     --info-border: #0c5460;
+    --shadow-light: rgba(0, 0, 0, 0.3);
+    --shadow-medium: rgba(0, 0, 0, 0.4);
 }
 
 [data-theme="red"] {
@@ -84,12 +88,14 @@
     --error-bg: #330000;
     --error-text: #ff8888;
     --error-border: #660000;
-    --success-bg: #003300;
-    --success-text: #88ff88;
-    --success-border: #006600;
-    --info-bg: #001a33;
-    --info-text: #88ccff;
-    --info-border: #003366;
+    --success-bg: #330000;
+    --success-text: #ff8888;
+    --success-border: #660000;
+    --info-bg: #330000;
+    --info-text: #ff8888;
+    --info-border: #660000;
+    --shadow-light: rgba(255, 68, 68, 0.2);
+    --shadow-medium: rgba(255, 68, 68, 0.3);
 }
 
 /* Base Styles */
@@ -112,7 +118,7 @@ body {
     background-color: var(--header-bg);
     border-bottom: 1px solid var(--border-color);
     padding: 1rem;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 4px var(--shadow-light);
 }
 
 .header-content {
@@ -211,7 +217,7 @@ body {
 .time-clock:hover {
     background-color: var(--clock-hover);
     transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 8px var(--shadow-medium);
 }
 
 .time-clock.active {
@@ -272,7 +278,7 @@ body {
     border: 1px solid var(--border-color);
     border-radius: 8px;
     background-color: var(--bg-secondary);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 8px var(--shadow-light);
 }
 
 /* Target Section */
@@ -295,20 +301,7 @@ body {
     color: var(--text-primary);
 }
 
-.add-target-btn {
-    background-color: var(--accent-color);
-    color: white;
-    border: none;
-    padding: 0.75rem 1.5rem;
-    border-radius: 4px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-}
 
-.add-target-btn:hover {
-    background-color: var(--accent-hover);
-}
 
 /* Target Table */
 .target-table-container {
@@ -376,55 +369,20 @@ body {
     font-weight: 500;
     cursor: pointer;
     transition: background-color 0.2s ease;
-}
-
-#save-target-btn {
-    background-color: var(--accent-color);
-    color: white;
-}
-
-#save-target-btn:hover {
-    background-color: var(--accent-hover);
-}
-
-#cancel-target-btn {
-    background-color: var(--bg-tertiary);
-    color: var(--text-primary);
-}
-
-#cancel-target-btn:hover {
-    background-color: var(--border-color);
-}
-
-#lookup-target-btn {
     background-color: var(--bg-secondary);
-    color: var(--text-primary);
-    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
 }
 
-#lookup-target-btn:hover {
+.form-row button:hover {
     background-color: var(--bg-tertiary);
 }
 
-#lookup-target-btn:disabled {
+.form-row button:disabled {
     opacity: 0.6;
     cursor: not-allowed;
 }
 
-/* Add button should match the primary/save button styling and be theme-aware */
-#add-target-btn {
-    background-color: var(--accent-color);
-    color: white;
-}
 
-#add-target-btn:hover {
-    background-color: var(--accent-hover);
-}
-
-#add-target-btn:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-}
 
 .lookup-message {
     margin-top: 0.5rem;

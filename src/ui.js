@@ -395,8 +395,8 @@
                 <td class="cell-az">--:--:--</td>
                 <td class="cell-rise">--:--</td>
                 <td class="cell-set">--:--</td>
-                <td>
-                    <button onclick="minairApp.targetManager.removeTarget(${target.id})" style="background: #dc3545; color: white; border: none; padding: 0.25rem 0.5rem; border-radius: 3px; cursor: pointer;">Remove</button>
+                <td class="form-row">
+                    <button onclick="minairApp.targetManager.removeTarget(${target.id})">Remove</button>
                 </td>
             `;
             return row;
