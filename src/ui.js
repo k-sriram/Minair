@@ -1,4 +1,42 @@
-/* ui.js — UI controller for Minair astronomical observation planner */
+/* ui.js — UI controller for Minair astronomical observation planner
+ * 
+ * === TimeCoordinator Integration ===
+ * 
+ * The app now has a centralized TimeCoordinator instance for proper astronomical time handling.
+ * 
+ * ACCESS PATTERNS:
+ * 
+ * 1. From anywhere in the app:
+ *    const timeCoordinator = window.minairApp.getTimeCoordinator();
+ * 
+ * 2. From within MinairApp class methods:
+ *    this.timeCoordinator
+ * 
+ * 3. Quick helper methods (from anywhere):
+ *    window.minairApp.convertToLocalSolar(time, 'utc')
+ *    window.minairApp.convertFromLocalSolar(localTime, 'user')
+ *    window.minairApp.getCurrentTime('lst')
+ * 
+ * TIME TYPES SUPPORTED:
+ * - 'utc': Coordinated Universal Time
+ * - 'user': User's selected timezone from dropdown
+ * - 'local': Local Solar Time at observation location (canonical for calculations)
+ * - 'lst': Local Sidereal Time at observation location
+ * 
+ * USAGE GUIDELINES:
+ * - Use LOCAL SOLAR TIME for all astronomical calculations
+ * - Convert to display time types only for UI presentation
+ * - TimeCoordinator automatically updates when location/timezone changes
+ * - Always use the TimeCoordinator instead of manual time calculations
+ * 
+ * EXAMPLE:
+ *   // For calculations - use local solar time
+ *   const localTime = window.minairApp.convertToLocalSolar(new Date(), 'utc');
+ *   const altAz = astro.raDecToAltAz(ra, dec, localTime, lat, lon);
+ *   
+ *   // For display - convert to user's preferred time
+ *   const displayTime = window.minairApp.convertFromLocalSolar(localTime, 'user');
+ */
 (function () {
     'use strict';
 
@@ -1475,6 +1513,11 @@
             this.locationManager = new LocationManager();
             this.timeManager = new TimeManager(this.locationManager);
             this.targetManager = new TargetManager();
+
+            // Initialize TimeCoordinator - this is the central time management system
+            // All astronomical calculations should use this for proper time handling
+            this.timeCoordinator = this.createTimeCoordinator();
+
             this.plotManager = new PlotManager(this.locationManager, this.timeManager, this.targetManager);
 
             this.setupEventListeners();
@@ -1509,6 +1552,9 @@
 
             // Timezone selector
             document.getElementById('timezone-select').addEventListener('change', () => {
+                // Update TimeCoordinator with new timezone
+                this.updateTimeCoordinator();
+
                 // Time will update on next clock tick
                 // Timezone changed - update rise/set display and axis label
                 this.targetManager.updateRiseSetTimes();
@@ -1646,6 +1692,10 @@
             } else {
                 customLocation.style.display = 'none';
                 this.locationManager.setObservatory(value);
+
+                // Update TimeCoordinator with new location
+                this.updateTimeCoordinator();
+
                 // Location changed - update rise/set times and plot
                 this.targetManager.updateRiseSetTimes();
                 this.plotManager.updatePlot();
@@ -1658,6 +1708,10 @@
 
             if (!isNaN(lat) && !isNaN(lon)) {
                 this.locationManager.setLocation(lat, lon, 'Custom Location');
+
+                // Update TimeCoordinator with new location
+                this.updateTimeCoordinator();
+
                 // Location changed - update rise/set times and plot
                 this.targetManager.updateRiseSetTimes();
                 this.plotManager.updatePlot();
@@ -1688,6 +1742,55 @@
             }
         }
 
+        // Create and configure TimeCoordinator with current app state
+        createTimeCoordinator() {
+            const location = this.locationManager.getLocation();
+            const userTimezoneOffset = this.getUserTimezoneOffsetMinutes();
+
+            // Create TimeCoordinator instance
+            const coordinator = new window.MinairAstronomy.TimeCoordinator(
+                location.lat,
+                location.lon,
+                userTimezoneOffset
+            );
+
+            console.log(`TimeCoordinator initialized: lat=${location.lat}, lon=${location.lon}, timezone=${userTimezoneOffset}min`);
+            return coordinator;
+        }
+
+        // Update TimeCoordinator when location or timezone changes
+        updateTimeCoordinator() {
+            if (!this.timeCoordinator) return;
+
+            const location = this.locationManager.getLocation();
+            const userTimezoneOffset = this.getUserTimezoneOffsetMinutes();
+
+            // Update the TimeCoordinator with new parameters
+            this.timeCoordinator.updateCoordinates(location.lat, location.lon, userTimezoneOffset);
+
+            console.log(`TimeCoordinator updated: lat=${location.lat}, lon=${location.lon}, timezone=${userTimezoneOffset}min`);
+        }
+
+        // Helper to get current user timezone offset in minutes
+        getUserTimezoneOffsetMinutes() {
+            const timezoneSelect = document.getElementById('timezone-select');
+            if (!timezoneSelect) {
+                // Fallback to browser timezone
+                return -new Date().getTimezoneOffset();
+            }
+
+            const selectedTimezone = timezoneSelect.value;
+            const match = selectedTimezone.match(/UTC([+-])(\d{1,2})(?::(\d{2}))?/);
+            if (!match) {
+                return -new Date().getTimezoneOffset();
+            }
+
+            const sign = match[1] === '+' ? 1 : -1;
+            const hours = parseInt(match[2]);
+            const minutes = parseInt(match[3] || '0');
+            return sign * (hours * 60 + minutes);
+        }
+
         clearAddTargetForm() {
             document.getElementById('target-name').value = '';
             document.getElementById('target-ra').value = '';
@@ -1715,6 +1818,43 @@
             const messageEl = document.getElementById('lookup-message');
             messageEl.style.display = 'none';
             messageEl.className = 'lookup-message';
+        }
+
+        // ========================================
+        // TimeCoordinator Access Methods
+        // ========================================
+        // These methods provide easy access to the TimeCoordinator functionality
+        // for any part of the application that needs proper time handling
+
+        // Get the TimeCoordinator instance (for external access)
+        getTimeCoordinator() {
+            return this.timeCoordinator;
+        }
+
+        // Quick access methods for common TimeCoordinator operations
+        // Convert any time to local solar time (canonical for calculations)
+        convertToLocalSolar(time, inputType = 'utc') {
+            return this.timeCoordinator.toLocalSolarTime(time, inputType);
+        }
+
+        // Convert local solar time to any display format
+        convertFromLocalSolar(localSolarTime, targetType = 'utc') {
+            return this.timeCoordinator.fromLocalSolarTime(localSolarTime, targetType);
+        }
+
+        // Get current time in any format
+        getCurrentTime(timeType = 'utc') {
+            return this.timeCoordinator.now(timeType);
+        }
+
+        // Create time series for calculations (always in local solar time)
+        createCalculationTimeSeries(startTime, endTime, stepMinutes, inputTimeType = 'utc') {
+            return this.timeCoordinator.createTimeSeriesLocal(startTime, endTime, stepMinutes, inputTimeType);
+        }
+
+        // Convert time series from calculations to display format
+        convertTimeSeriesForDisplay(localSolarSeries, targetTimeType = 'utc') {
+            return this.timeCoordinator.convertSeriesForDisplay(localSolarSeries, targetTimeType);
         }
 
         addNewTarget() {
