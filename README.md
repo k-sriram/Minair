@@ -24,7 +24,7 @@ Then open http://localhost:8000 in your browser.
 
 ## Deploying to GitHub Pages
 
-This repository is a static site and can be hosted using GitHub Pages. The repository includes a GitHub Actions workflow (`.github/workflows/deploy.yml`) that will publish the repository root to GitHub Pages whenever you push to the `main` branch.
+This repository is a static site and can be hosted using GitHub Pages.
 
 Steps to publish:
 
@@ -39,8 +39,13 @@ git branch -M main
 git push -u origin main
 ```
 
-3. After push, the GitHub Actions workflow will run and publish the site. For a user/organization site (repo named `username.github.io`) the site will be live at `https://username.github.io/` once deployment completes.
+3. In your GitHub repository, go to Settings → Pages.
+4. Under "Source", select "Deploy from a branch".
+5. Choose "main" branch and "/ (root)" folder.
+6. Click "Save".
+
+Your site will be live at `https://username.github.io/` (for user sites) or `https://username.github.io/repo-name/` (for project sites) within a few minutes.
 
 Notes:
-- If you want the site on a `gh-pages` branch instead, change the workflow or use a different deployment action. The included workflow publishes the repository root (no build) from `main`.
+- The site will automatically update when you push new commits to the `main` branch.
 - You can add a `CNAME` file to the repo root if you want a custom domain.
