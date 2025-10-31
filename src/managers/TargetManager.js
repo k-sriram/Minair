@@ -1,0 +1,177 @@
+/* TargetManager.js — Target management for Minair
+ */
+import { parseRA, parseDec } from '../utils/CoordinateParser.js';
+import {
+    formatRA,
+    formatDec,
+    formatAngleDeg,
+    formatAngleDegUnsigned,
+    formatHourAngle
+} from '../utils/CoordinateFormatter.js';
+import { formatDateHHMMWithTimeZone } from '../utils/TimeConverter.js';
+
+export class TargetManager {
+    constructor() {
+        this.targets = [];
+        this.loadDefaultTargets();
+    }
+
+    async loadDefaultTargets() {
+        try {
+            const response = await fetch('data/targets.json');
+            const defaultTargets = await response.json();
+            // Convert loaded targets to our internal format
+            this.targets = defaultTargets.map(target => ({
+                name: target.name,
+                ra: target.raHours || target.ra, // Use numeric raHours if available, fallback to ra
+                dec: target.decDeg || target.dec, // Use numeric decDeg if available, fallback to dec
+                id: Date.now() + Math.random() // Generate unique ID
+            }));
+            this.updateTargetTable();
+            // After populating table, compute current alt/az and rise/set for each target
+            this.updateTargetsObservingInfo();
+        } catch (error) {
+            console.error('Failed to load default targets:', error);
+        }
+    }
+
+    addTarget(name, ra, dec) {
+        const target = {
+            name: name.trim(),
+            ra: parseRA(ra),
+            dec: parseDec(dec),
+            id: Date.now() // Simple ID generation
+        };
+        this.targets.push(target);
+        this.updateTargetTable();
+        return target;
+    }
+
+    removeTarget(id) {
+        this.targets = this.targets.filter(t => t.id !== id);
+        this.updateTargetTable();
+        // Update plot after removing target
+        const app = window.minairApp;
+        if (app && app.plotManager) {
+            setTimeout(() => {
+                app.plotManager.updatePlot();
+            }, 100);
+        }
+    }
+
+    updateTargetTable() {
+        const tbody = document.getElementById('target-table-body');
+        tbody.innerHTML = '';
+
+        this.targets.forEach(target => {
+            const row = this.createTargetRow(target);
+            tbody.appendChild(row);
+        });
+    }
+
+    createTargetRow(target) {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td class="cell-name">${target.name}</td>
+            <td class="cell-ra">${formatRA(target.ra)}</td>
+            <td class="cell-dec">${formatDec(target.dec)}</td>
+            <td class="cell-alt">--:--:--</td>
+            <td class="cell-az">--:--:--</td>
+            <td class="cell-ha">--h--m</td>
+            <td class="cell-airmass">--.--</td>
+            <td class="cell-rise">--:--</td>
+            <td class="cell-set">--:--</td>
+            <td class="form-row">
+                <button onclick="minairApp.targetManager.removeTarget(${target.id})">Remove</button>
+            </td>
+        `;
+        return row;
+    }
+
+    // Lightweight method to update only current alt/az for real-time tracking
+    async updateCurrentAltAz() {
+        const tbody = document.getElementById('target-table-body');
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+        const astro = window.MinairAstronomy;
+        const obsParams = window.minairApp.getObservationParameters();
+
+        // Convert current UTC time to local solar time for accurate calculations
+        const utcNow = new Date();
+
+        for (let i = 0; i < this.targets.length; i++) {
+            const target = this.targets[i];
+            const row = rows[i];
+            if (!row) continue;
+
+            // Current alt/az, hour angle, and airmass
+            try {
+                const altAz = astro.calcAltAz(target.ra, target.dec, utcNow, obsParams.obsLat, obsParams.obsLon);
+                const lstHours = astro.lstFromUTC(utcNow, obsParams.obsLon);
+                const ha = astro.calcHourAngle(lstHours, target.ra);
+                const am = astro.calcAirmass(altAz.alt);
+
+                row.querySelector('.cell-alt').textContent = formatAngleDeg(altAz.alt);
+                row.querySelector('.cell-az').textContent = formatAngleDegUnsigned(altAz.az);
+                row.querySelector('.cell-ha').textContent = formatHourAngle(ha);
+                row.querySelector('.cell-airmass').textContent = isNaN(am) ? '--' : am.toFixed(2);
+            } catch (e) {
+                console.error(`Error updating alt/az for target ${target.name}:`, e);
+                // Set error indicators in the table
+                row.querySelector('.cell-alt').textContent = 'ERROR';
+                row.querySelector('.cell-az').textContent = 'ERROR';
+                row.querySelector('.cell-ha').textContent = 'ERROR';
+                row.querySelector('.cell-airmass').textContent = 'ERROR';
+            }
+        }
+    }
+
+    // Method to update rise/set times (less frequent updates)
+    async updateRiseSetTimes() {
+        const tbody = document.getElementById('target-table-body');
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+        const astro = window.MinairAstronomy;
+        const obsParams = window.minairApp.getObservationParameters();
+
+        // Get minimum altitude from UI (default to 0° if not set)
+        const minAltInput = document.getElementById('min-altitude');
+        const minAlt = minAltInput ? parseFloat(minAltInput.value) || 0 : 0;
+
+        // Loop through targets and compute rise/set times
+        for (let i = 0; i < this.targets.length; i++) {
+            const target = this.targets[i];
+
+            const row = rows[i];
+            if (!row) continue;
+
+            // Rise/Set times: compute altitude curve for 24h from local noon
+            try {
+                const riseSet = astro.calcRiseSet(target.ra, target.dec, obsParams.obsLat, obsParams.obsLon, obsParams.obsDay, minAlt);
+                const riseDateUTC = riseSet.riseTime ? riseSet.riseTime : null;
+                const setDateUTC = riseSet.setTime ? riseSet.setTime : null;
+
+                // Update display  
+                const timeManager = window.minairApp?.timeManager;
+                row.querySelector('.cell-rise').textContent = riseDateUTC ? formatDateHHMMWithTimeZone(riseDateUTC, timeManager) : '--:--';
+                row.querySelector('.cell-set').textContent = setDateUTC ? formatDateHHMMWithTimeZone(setDateUTC, timeManager) : '--:--';
+            } catch (e) {
+                console.error(`Rise/set calculation error for ${target.name}:`, e);
+            }
+        }
+    }
+
+    // Compute and update current alt/az and rise/set times for targets
+    async updateTargetsObservingInfo() {
+        // Update both alt/az and rise/set times
+        await this.updateCurrentAltAz();
+        await this.updateRiseSetTimes();
+    }
+
+    // Lookup coordinates for an object name using external catalog services.
+    // Delegates to the catalog service module.
+    // Returns { raHours, decDeg }
+    async lookupCoordinates(name) {
+        return await window.MinairCatalog.lookupCoordinates(name);
+    }
+
+
+}
