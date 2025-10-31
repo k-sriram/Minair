@@ -213,7 +213,6 @@
         constructor() {
             this.targets = [];
             this.loadDefaultTargets();
-            this._lastLookupTime = 0; // for rate-limiting external queries (ms)
         }
 
         async loadDefaultTargets() {
