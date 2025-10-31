@@ -91,9 +91,9 @@
         let airmass = 1 / Math.cos(zenithRad);
 
         // Use Kasten-Young formula for better accuracy at low altitudes
-        if (altAz.alt < 60) {
-            const altRad = deg2Rad(altAz.alt);
-            airmass = 1 / (Math.sin(altRad) + 0.50572 * Math.pow(altAz.alt + 6.07995, -1.6364));
+        if (altDeg < 60) {
+            const altRad = deg2Rad(altDeg);
+            airmass = 1 / (Math.sin(altRad) + 0.50572 * Math.pow(altDeg + 6.07995, -1.6364));
         }
         return airmass;
     }

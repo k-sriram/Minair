@@ -1,41 +1,4 @@
 /* ui.js — UI controller for Minair astronomical observation planner
- * 
- * === TimeCoordinator Integration ===
- * 
- * The app now has a centralized TimeCoordinator instance for proper astronomical time handling.
- * 
- * ACCESS PATTERNS:
- * 
- * 1. From anywhere in the app:
- *    const timeCoordinator = window.minairApp.getTimeCoordinator();
- * 
- * 2. From within MinairApp class methods:
- *    this.timeCoordinator
- * 
- * 3. Quick helper methods (from anywhere):
- *    window.minairApp.convertToLocalSolar(time, 'utc')
- *    window.minairApp.convertFromLocalSolar(localTime, 'user')
- *    window.minairApp.getCurrentTime('lst')
- * 
- * TIME TYPES SUPPORTED:
- * - 'utc': Coordinated Universal Time
- * - 'user': User's selected timezone from dropdown
- * - 'local': Local Solar Time at observation location (canonical for calculations)
- * - 'lst': Local Sidereal Time at observation location
- * 
- * USAGE GUIDELINES:
- * - Use LOCAL SOLAR TIME for all astronomical calculations
- * - Convert to display time types only for UI presentation
- * - TimeCoordinator automatically updates when location/timezone changes
- * - Always use the TimeCoordinator instead of manual time calculations
- * 
- * EXAMPLE:
- *   // For calculations - use local solar time
- *   const localTime = window.minairApp.convertToLocalSolar(new Date(), 'utc');
- *   const altAz = astro.raDecToAltAz(ra, dec, localTime, lat, lon);
- *   
- *   // For display - convert to user's preferred time
- *   const displayTime = window.minairApp.convertFromLocalSolar(localTime, 'user');
  */
 (function () {
     'use strict';
@@ -187,7 +150,7 @@
                 this.lstAccumulator -= 1.0;
                 // Calculate and update LST
                 const location = this.locationManager.getLocation();
-                const lstTime = this.calculateLST(this.currentTime, location.lon);
+                const lstTime = window.MinairAstronomy.lstFromUTC(this.currentTime, location.lon);
                 document.getElementById('lst-time').textContent = this.formatTime(lstTime);
             }
 
@@ -215,30 +178,6 @@
             const timezoneTime = new Date(utcTime + (offsetMinutes * 60000));
 
             return timezoneTime.toLocaleTimeString([], { hour12: false });
-        }
-
-        calculateLST(date, longitude) {
-            // Simplified LST calculation - use astronomy.js for more accurate version
-            const jd = this.dateToJulianDay(date);
-            const gmst = this.julianDayToGMST(jd);
-            const lst = gmst + (longitude / 15.0);
-            return this.normalizeHours(lst);
-        }
-
-        dateToJulianDay(date) {
-            return (date.getTime() / 86400000) + 2440587.5;
-        }
-
-        julianDayToGMST(jd) {
-            const t = (jd - 2451545.0) / 36525.0;
-            let gmst = 280.46061837 + 360.98564736629 * (jd - 2451545.0) + 0.000387933 * t * t - t * t * t / 38710000.0;
-            return this.normalizeHours(gmst / 15.0);
-        }
-
-        normalizeHours(hours) {
-            while (hours < 0) hours += 24;
-            while (hours >= 24) hours -= 24;
-            return hours;
         }
 
         formatTime(hours) {
@@ -460,9 +399,10 @@
             const tbody = document.getElementById('target-table-body');
             const rows = Array.from(tbody.querySelectorAll('tr'));
             const astro = window.MinairAstronomy;
-            const app = window.minairApp;
-            const loc = app ? app.locationManager.getLocation() : { lat: 51.4779, lon: -0.0015 };
-            const now = new Date();
+            const obsParams = window.minairApp.getObservationParameters();
+
+            // Convert current UTC time to local solar time for accurate calculations
+            const utcNow = new Date();
 
             for (let i = 0; i < this.targets.length; i++) {
                 const target = this.targets[i];
@@ -471,36 +411,22 @@
 
                 // Current alt/az, hour angle, and airmass
                 try {
-                    const altAz = astro.raDecToAltAz(target.ra, target.dec, now, loc.lat, loc.lon);
-
-                    // Calculate hour angle (LST - RA)
-                    const JD = astro.toJulianDate(now);
-                    const lst = astro.lstFromJulian(JD, loc.lon);
-                    let haHours = lst - target.ra;
-                    // Wrap to -12 to +12 hour range
-                    while (haHours > 12) haHours -= 24;
-                    while (haHours < -12) haHours += 24;
-
-                    // Calculate airmass using sec(z) approximation where z = 90° - altitude
-                    let airmass = '--';
-                    if (altAz.alt > 0) {
-                        const zenithAngle = 90 - altAz.alt;
-                        const zenithRad = zenithAngle * Math.PI / 180;
-                        airmass = 1 / Math.cos(zenithRad);
-
-                        // Use Kasten-Young formula for better accuracy at low altitudes
-                        if (altAz.alt < 60) {
-                            const altRad = altAz.alt * Math.PI / 180;
-                            airmass = 1 / (Math.sin(altRad) + 0.50572 * Math.pow(altAz.alt + 6.07995, -1.6364));
-                        }
-                    }
+                    const altAz = astro.calcAltAz(target.ra, target.dec, utcNow, obsParams.obsLat, obsParams.obsLon);
+                    const lstHours = astro.lstFromUTC(utcNow, obsParams.obsLon);
+                    const ha = astro.calcHourAngle(lstHours, target.ra);
+                    const am = astro.calcAirmass(altAz.alt);
 
                     row.querySelector('.cell-alt').textContent = this.formatAngleDeg(altAz.alt);
                     row.querySelector('.cell-az').textContent = this.formatAngleDegUnsigned(altAz.az);
-                    row.querySelector('.cell-ha').textContent = this.formatHourAngle(haHours);
-                    row.querySelector('.cell-airmass').textContent = typeof airmass === 'number' ? airmass.toFixed(2) : '--';
+                    row.querySelector('.cell-ha').textContent = this.formatHourAngle(ha);
+                    row.querySelector('.cell-airmass').textContent = isNaN(am) ? '--' : am.toFixed(2);
                 } catch (e) {
-                    // ignore
+                    console.error(`Error updating alt/az for target ${target.name}:`, e);
+                    // Set error indicators in the table
+                    row.querySelector('.cell-alt').textContent = 'ERROR';
+                    row.querySelector('.cell-az').textContent = 'ERROR';
+                    row.querySelector('.cell-ha').textContent = 'ERROR';
+                    row.querySelector('.cell-airmass').textContent = 'ERROR';
                 }
             }
         }
@@ -509,113 +435,29 @@
         async updateRiseSetTimes() {
             const tbody = document.getElementById('target-table-body');
             const rows = Array.from(tbody.querySelectorAll('tr'));
-            const scheduler = window.MinairScheduler;
-            const app = window.minairApp;
-            const loc = app ? app.locationManager.getLocation() : { lat: 51.4779, lon: -0.0015 };
-
-            // Get observation date from UI (default to today if not set)
-            const obsDateInput = document.getElementById('observation-date');
-            const obsDateStr = obsDateInput ? obsDateInput.value : new Date().toISOString().split('T')[0];
-
-            // Calculate local noon (12:00) for the observation location
-            // We need to calculate the local time at the observation location, not the browser's timezone
-            const obsDate = new Date(obsDateStr + 'T12:00:00Z'); // Start with UTC noon
-
-            // Calculate the local time offset for the observation location
-            // Approximate: 1 hour per 15 degrees longitude, east positive
-            const localTimeOffsetHours = loc.lon / 15; // Hours offset from UTC
-            const localTimeOffsetMs = localTimeOffsetHours * 60 * 60 * 1000;
-
-            // Adjust to local noon at the observation location
-            const localNoon = new Date(obsDate.getTime() - localTimeOffsetMs);
-
-            console.log(`Using observation window: ${localNoon.toISOString()} to ${new Date(localNoon.getTime() + 24 * 60 * 60 * 1000).toISOString()} (24h from local noon)`);
+            const astro = window.MinairAstronomy;
+            const obsParams = window.minairApp.getObservationParameters();
 
             // Get minimum altitude from UI (default to 0° if not set)
             const minAltInput = document.getElementById('min-altitude');
-            const minAlt = minAltInput ? parseFloat(minAltInput.value) || 0 : 0; for (let i = 0; i < this.targets.length; i++) {
+            const minAlt = minAltInput ? parseFloat(minAltInput.value) || 0 : 0;
+
+            // Loop through targets and compute rise/set times
+            for (let i = 0; i < this.targets.length; i++) {
                 const target = this.targets[i];
+
                 const row = rows[i];
                 if (!row) continue;
 
                 // Rise/Set times: compute altitude curve for 24h from local noon
                 try {
-                    // Create our own 24-hour sample array from local noon to local noon next day
-                    const samples = [];
-                    const stepMinutes = 1; // 1-minute resolution for better accuracy
-                    const astro = window.MinairAstronomy;
-
-                    for (let minutes = 0; minutes < 24 * 60; minutes += stepMinutes) {
-                        const sampleTime = new Date(localNoon.getTime() + minutes * 60000);
-                        const altAz = astro.raDecToAltAz(target.ra, target.dec, sampleTime, loc.lat, loc.lon);
-                        samples.push({ time: sampleTime, alt: altAz.alt, az: altAz.az });
-                    }
-
-                    console.log(`Debug ${target.name}: minAlt=${minAlt}°, samples=${samples.length}`);
-                    if (samples.length > 0) {
-                        const altRange = samples.map(s => s.alt);
-                        console.log(`  Alt range: ${Math.min(...altRange).toFixed(1)}° to ${Math.max(...altRange).toFixed(1)}°`);
-                        console.log(`  Time range: ${samples[0].time.toISOString()} to ${samples[samples.length - 1].time.toISOString()}`);
-                    }
-
-                    // Check if object starts above minimum altitude
-                    const startsAbove = samples.length > 0 && samples[0].alt >= minAlt;
-
-                    // Look for altitude crossings at the minimum altitude threshold
-                    const rises = [];
-                    const sets = [];
-
-                    for (let j = 1; j < samples.length; j++) {
-                        const prevAlt = samples[j - 1].alt;
-                        const currAlt = samples[j].alt;
-
-                        // Rise: upward crossing (below minAlt to above minAlt)
-                        if (prevAlt < minAlt && currAlt >= minAlt) {
-                            // Linear interpolation to get more precise crossing time
-                            const ratio = (minAlt - prevAlt) / (currAlt - prevAlt);
-                            const crossingTime = new Date(samples[j - 1].time.getTime() +
-                                ratio * (samples[j].time.getTime() - samples[j - 1].time.getTime()));
-                            rises.push(crossingTime);
-                            console.log(`  Rise found: ${prevAlt.toFixed(1)}° -> ${currAlt.toFixed(1)}° at ${this.formatDateHHMM(crossingTime)}`);
-                        }
-
-                        // Set: downward crossing (above minAlt to below minAlt)
-                        if (prevAlt >= minAlt && currAlt < minAlt) {
-                            // Linear interpolation to get more precise crossing time
-                            const ratio = (minAlt - prevAlt) / (currAlt - prevAlt);
-                            const crossingTime = new Date(samples[j - 1].time.getTime() +
-                                ratio * (samples[j].time.getTime() - samples[j - 1].time.getTime()));
-                            sets.push(crossingTime);
-                            console.log(`  Set found: ${prevAlt.toFixed(1)}° -> ${currAlt.toFixed(1)}° at ${this.formatDateHHMM(crossingTime)}`);
-                        }
-                    }
-
-                    // Determine the most relevant rise and set times for observation planning
-                    let rise = null, set = null;
-
-                    if (startsAbove) {
-                        // Object starts above threshold - use first set and next rise (if any)
-                        set = sets.length > 0 ? sets[0] : null;
-                        rise = rises.length > 0 ? rises[0] : null;
-                    } else {
-                        // Object starts below threshold - use first rise and next set (if any)
-                        rise = rises.length > 0 ? rises[0] : null;
-                        set = sets.length > 0 ? sets[0] : null;
-                    }
-
-                    // Log analysis of crossing patterns
-                    console.log(`  Found ${rises.length} rise(s) and ${sets.length} set(s) in 24h period`);
-                    if (startsAbove && !rise) {
-                        console.log(`  Object starts above ${minAlt}° and doesn't rise again during 24h period`);
-                    } else if (startsAbove && rise) {
-                        console.log(`  Object starts above ${minAlt}°, sets then rises again during 24h period`);
-                    }
-
-                    console.log(`  Final: rise=${rise ? this.formatDateHHMM(rise) : 'none'}, set=${set ? this.formatDateHHMM(set) : 'none'}`);
+                    const riseSet = astro.calcRiseSet(target.ra, target.dec, obsParams.obsLat, obsParams.obsLon, obsParams.obsDay, minAlt);
+                    const riseDateUTC = riseSet.riseTime ? riseSet.riseTime : null;
+                    const setDateUTC = riseSet.setTime ? riseSet.setTime : null;
 
                     // Update display
-                    row.querySelector('.cell-rise').textContent = rise ? this.formatDateHHMM(rise) : '--:--';
-                    row.querySelector('.cell-set').textContent = set ? this.formatDateHHMM(set) : '--:--';
+                    row.querySelector('.cell-rise').textContent = riseDateUTC ? this.formatDateHHMM(riseDateUTC) : '--:--';
+                    row.querySelector('.cell-set').textContent = setDateUTC ? this.formatDateHHMM(setDateUTC) : '--:--';
                 } catch (e) {
                     console.error(`Rise/set calculation error for ${target.name}:`, e);
                 }
@@ -629,87 +471,11 @@
             await this.updateRiseSetTimes();
         }
 
-        // Rate-limit helper: ensure at least 100ms between external queries
-        async _rateLimitQuery() {
-            const minInterval = 100; // ms
-            const now = Date.now();
-            const since = now - (this._lastLookupTime || 0);
-            if (since < minInterval) {
-                await new Promise(r => setTimeout(r, minInterval - since));
-            }
-            this._lastLookupTime = Date.now();
-        }
-
-        // Lookup coordinates for an object name using CDS/SIMBAD services.
+        // Lookup coordinates for an object name using external catalog services.
+        // Delegates to the catalog service module.
         // Returns { raHours, decDeg }
         async lookupCoordinates(name) {
-            if (!name || !name.trim()) throw new Error('Empty name');
-            await this._rateLimitQuery();
-
-            // First try CDS Sesame text resolver which often returns a '%J' line with J2000 decimal degrees
-            const sesameUrl = `https://cdsweb.u-strasbg.fr/cgi-bin/nph-sesame/-oI?${encodeURIComponent(name)}`;
-            try {
-                const res = await fetch(sesameUrl);
-                if (res.ok) {
-                    const txt = await res.text();
-                    const lines = txt.split(/\r?\n/);
-                    for (const line of lines) {
-                        // %J RA DEC (degrees)
-                        const m = line.match(/^%J\s+([+-]?[0-9\.Ee+-]+)\s+([+-]?[0-9\.Ee+-]+)/);
-                        if (m) {
-                            const raDeg = parseFloat(m[1]);
-                            const decDeg = parseFloat(m[2]);
-                            if (!isNaN(raDeg) && !isNaN(decDeg)) {
-                                return { raHours: raDeg / 15.0, decDeg };
-                            }
-                        }
-                    }
-                }
-            } catch (e) {
-                // ignore and try SIMBAD VOTABLE next
-                console.warn('Sesame lookup failed:', e);
-            }
-
-            // Second attempt: SIMBAD VOTABLE output (may be blocked by CORS in browsers)
-            const simbadUrl = `https://simbad.u-strasbg.fr/simbad/sim-id?Ident=${encodeURIComponent(name)}&output.format=VOTABLE`;
-            try {
-                const res2 = await fetch(simbadUrl);
-                if (res2.ok) {
-                    const xmlText = await res2.text();
-                    const parser = new DOMParser();
-                    const xml = parser.parseFromString(xmlText, 'application/xml');
-
-                    // Build field name -> index map
-                    const fields = Array.from(xml.querySelectorAll('FIELD')).map(f => ({ name: f.getAttribute('name') || '', id: f.getAttribute('ID') || '' }));
-                    let raIdx = -1, decIdx = -1;
-                    for (let i = 0; i < fields.length; i++) {
-                        const nm = (fields[i].name || fields[i].id || '').toLowerCase();
-                        if (nm.includes('ra') && raIdx === -1) raIdx = i;
-                        if (nm.includes('dec') && decIdx === -1) decIdx = i;
-                    }
-
-                    // Fallback: pick first two numeric TDs in first TR
-                    const firstTR = xml.querySelector('TR');
-                    if (firstTR) {
-                        const tds = Array.from(firstTR.querySelectorAll('TD'));
-                        if (raIdx >= 0 && decIdx >= 0 && tds.length > Math.max(raIdx, decIdx)) {
-                            const raVal = parseFloat(tds[raIdx].textContent);
-                            const decVal = parseFloat(tds[decIdx].textContent);
-                            if (!isNaN(raVal) && !isNaN(decVal)) return { raHours: raVal / 15.0, decDeg: decVal };
-                        }
-                        // Try scanning for two numeric columns
-                        const numeric = tds.map(td => parseFloat(td.textContent)).filter(n => !isNaN(n));
-                        if (numeric.length >= 2) {
-                            // Assume first is RA (deg) and second is Dec (deg)
-                            return { raHours: numeric[0] / 15.0, decDeg: numeric[1] };
-                        }
-                    }
-                }
-            } catch (e) {
-                console.warn('SIMBAD VOTABLE lookup failed:', e);
-            }
-
-            throw new Error('Unable to resolve object coordinates. Please check the object name and try again.');
+            return await window.MinairCatalog.lookupCoordinates(name);
         }
 
         // Format azimuth without sign, 0-360 as dd:mm:ss
@@ -821,40 +587,33 @@
             }
 
             const convertedDate = this.convertDateToSelectedTimeReference(date, app.timeManager);
-            const h = convertedDate.getHours().toString().padStart(2, '0');
-            const m = convertedDate.getMinutes().toString().padStart(2, '0');
+            const h = convertedDate.getUTCHours().toString().padStart(2, '0');
+            const m = convertedDate.getUTCMinutes().toString().padStart(2, '0');
             return `${h}:${m}`;
         }
 
         // Convert a Date to the selected time reference
-        convertDateToSelectedTimeReference(date, timeManager) {
+        convertDateToSelectedTimeReference(dateUTC, timeManager) {
             const selectedRef = timeManager.selectedTimeReference;
-            const location = timeManager.locationManager.getLocation();
-
-            // Step 1: Convert the input date to correct UTC time (accounting for longitude)
-            // The input date is the actual UTC time when rise/set occurs at the observation location
-            const longitudeOffsetHours = location.lon / 15; // Hours offset from UTC (east positive)
-            const longitudeOffsetMs = longitudeOffsetHours * 60 * 60 * 1000;
-            const correctUtcTime = new Date(date.getTime() - longitudeOffsetMs);
 
             // Step 2: Convert from correct UTC to the selected time reference
             if (selectedRef === 'utc') {
                 // Show the correct UTC time
-                return correctUtcTime;
+                return dateUTC;
             } else if (selectedRef === 'lst') {
                 // Convert UTC time to LST at the observation location
                 const location = timeManager.locationManager.getLocation();
-                const lstHours = timeManager.calculateLST(correctUtcTime, location.lon);
-                const lstDate = new Date(correctUtcTime);
+                const lstHours = window.MinairAstronomy.lstFromUTC(dateUTC, location.lon);
+                const lstDate = new Date(dateUTC);
                 lstDate.setUTCHours(Math.floor(lstHours), Math.floor((lstHours % 1) * 60), 0, 0);
                 return lstDate;
             } else { // 'local' or selected timezone
                 const timezoneSelect = document.getElementById('timezone-select');
-                if (!timezoneSelect) return correctUtcTime;
+                if (!timezoneSelect) return dateUTC;
 
                 const selectedTimezone = timezoneSelect.value;
                 const match = selectedTimezone.match(/UTC([+-])(\d{1,2})(?::(\d{2}))?/);
-                if (!match) return correctUtcTime;
+                if (!match) return dateUTC;
 
                 const sign = match[1] === '+' ? 1 : -1;
                 const hours = parseInt(match[2]);
@@ -862,7 +621,7 @@
                 const offsetMinutes = sign * (hours * 60 + minutes);
 
                 // Convert from UTC to selected timezone
-                const timezoneTime = new Date(correctUtcTime.getTime() + (offsetMinutes * 60000));
+                const timezoneTime = new Date(dateUTC.getTime() + (offsetMinutes * 60000));
                 return timezoneTime;
             }
         }
@@ -1514,10 +1273,6 @@
             this.timeManager = new TimeManager(this.locationManager);
             this.targetManager = new TargetManager();
 
-            // Initialize TimeCoordinator - this is the central time management system
-            // All astronomical calculations should use this for proper time handling
-            this.timeCoordinator = this.createTimeCoordinator();
-
             this.plotManager = new PlotManager(this.locationManager, this.timeManager, this.targetManager);
 
             this.setupEventListeners();
@@ -1693,9 +1448,6 @@
                 customLocation.style.display = 'none';
                 this.locationManager.setObservatory(value);
 
-                // Update TimeCoordinator with new location
-                this.updateTimeCoordinator();
-
                 // Location changed - update rise/set times and plot
                 this.targetManager.updateRiseSetTimes();
                 this.plotManager.updatePlot();
@@ -1708,9 +1460,6 @@
 
             if (!isNaN(lat) && !isNaN(lon)) {
                 this.locationManager.setLocation(lat, lon, 'Custom Location');
-
-                // Update TimeCoordinator with new location
-                this.updateTimeCoordinator();
 
                 // Location changed - update rise/set times and plot
                 this.targetManager.updateRiseSetTimes();
@@ -1742,35 +1491,6 @@
             }
         }
 
-        // Create and configure TimeCoordinator with current app state
-        createTimeCoordinator() {
-            const location = this.locationManager.getLocation();
-            const userTimezoneOffset = this.getUserTimezoneOffsetMinutes();
-
-            // Create TimeCoordinator instance
-            const coordinator = new window.MinairAstronomy.TimeCoordinator(
-                location.lat,
-                location.lon,
-                userTimezoneOffset
-            );
-
-            console.log(`TimeCoordinator initialized: lat=${location.lat}, lon=${location.lon}, timezone=${userTimezoneOffset}min`);
-            return coordinator;
-        }
-
-        // Update TimeCoordinator when location or timezone changes
-        updateTimeCoordinator() {
-            if (!this.timeCoordinator) return;
-
-            const location = this.locationManager.getLocation();
-            const userTimezoneOffset = this.getUserTimezoneOffsetMinutes();
-
-            // Update the TimeCoordinator with new parameters
-            this.timeCoordinator.updateCoordinates(location.lat, location.lon, userTimezoneOffset);
-
-            console.log(`TimeCoordinator updated: lat=${location.lat}, lon=${location.lon}, timezone=${userTimezoneOffset}min`);
-        }
-
         // Helper to get current user timezone offset in minutes
         getUserTimezoneOffsetMinutes() {
             const timezoneSelect = document.getElementById('timezone-select');
@@ -1789,6 +1509,20 @@
             const hours = parseInt(match[2]);
             const minutes = parseInt(match[3] || '0');
             return sign * (hours * 60 + minutes);
+        }
+
+        // Helper to get current observation parameters
+        getObservationParameters() {
+            const location = this.locationManager.getLocation();
+            const obsDateInput = document.getElementById('observation-date');
+            const obsDateStr = obsDateInput ? obsDateInput.value : new Date().toISOString().split('T')[0];
+            const obsDate = new Date(obsDateStr);
+
+            return {
+                obsLat: location.lat,
+                obsLon: location.lon,
+                obsDay: obsDate
+            };
         }
 
         clearAddTargetForm() {
@@ -1818,43 +1552,6 @@
             const messageEl = document.getElementById('lookup-message');
             messageEl.style.display = 'none';
             messageEl.className = 'lookup-message';
-        }
-
-        // ========================================
-        // TimeCoordinator Access Methods
-        // ========================================
-        // These methods provide easy access to the TimeCoordinator functionality
-        // for any part of the application that needs proper time handling
-
-        // Get the TimeCoordinator instance (for external access)
-        getTimeCoordinator() {
-            return this.timeCoordinator;
-        }
-
-        // Quick access methods for common TimeCoordinator operations
-        // Convert any time to local solar time (canonical for calculations)
-        convertToLocalSolar(time, inputType = 'utc') {
-            return this.timeCoordinator.toLocalSolarTime(time, inputType);
-        }
-
-        // Convert local solar time to any display format
-        convertFromLocalSolar(localSolarTime, targetType = 'utc') {
-            return this.timeCoordinator.fromLocalSolarTime(localSolarTime, targetType);
-        }
-
-        // Get current time in any format
-        getCurrentTime(timeType = 'utc') {
-            return this.timeCoordinator.now(timeType);
-        }
-
-        // Create time series for calculations (always in local solar time)
-        createCalculationTimeSeries(startTime, endTime, stepMinutes, inputTimeType = 'utc') {
-            return this.timeCoordinator.createTimeSeriesLocal(startTime, endTime, stepMinutes, inputTimeType);
-        }
-
-        // Convert time series from calculations to display format
-        convertTimeSeriesForDisplay(localSolarSeries, targetTimeType = 'utc') {
-            return this.timeCoordinator.convertSeriesForDisplay(localSolarSeries, targetTimeType);
         }
 
         addNewTarget() {
