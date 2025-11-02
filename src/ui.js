@@ -22,7 +22,6 @@
             this.locationManager = new modules.LocationManager();
             this.timeManager = new modules.TimeManager(this.locationManager);
             this.targetManager = new modules.TargetManager();
-            this.plotManager = new modules.PlotManager(this.locationManager, this.timeManager, this.targetManager);
 
             this.setupEventListeners();
             this.initializeUI();
@@ -32,10 +31,6 @@
             // Theme selector
             document.getElementById('theme-select').addEventListener('change', (e) => {
                 this.themeManager.switchTheme(e.target.value);
-                // Update plot colors for new theme
-                setTimeout(() => {
-                    this.plotManager.onThemeChange();
-                }, 100);
             });
 
             // Location selector
@@ -48,9 +43,8 @@
                 clock.addEventListener('click', (e) => {
                     const timeRef = e.currentTarget.dataset.timezone;
                     this.timeManager.setTimeReference(timeRef);
-                    // Time reference changed - update rise/set display and axis label
+                    // Time reference changed - update rise/set display
                     this.targetManager.updateRiseSetTimes();
-                    this.plotManager.updateTimeAxisLabel();
                 });
             });
 
@@ -60,9 +54,8 @@
                 this.updateTimeCoordinator();
 
                 // Time will update on next clock tick
-                // Timezone changed - update rise/set display and axis label
+                // Timezone changed - update rise/set display
                 this.targetManager.updateRiseSetTimes();
-                this.plotManager.updateTimeAxisLabel();
             });
 
             // Target management - Add button
@@ -125,9 +118,8 @@
 
             // Observation date changes
             document.getElementById('observation-date').addEventListener('change', () => {
-                // Date changed - update rise/set times and plot
+                // Date changed - update rise/set times
                 this.targetManager.updateRiseSetTimes();
-                this.plotManager.updatePlot();
             });
 
             // Min altitude changes
@@ -141,7 +133,7 @@
             if (graphBtn) {
                 graphBtn.addEventListener('click', () => {
                     console.log('Graph toggle button clicked!');
-                    this.plotManager.toggle();
+                    // Plot functionality will be re-implemented later
                 });
                 console.log('Graph toggle button event listener added');
             } else {
@@ -198,9 +190,8 @@
                 customLocation.style.display = 'none';
                 this.locationManager.setObservatory(value);
 
-                // Location changed - update rise/set times and plot
+                // Location changed - update rise/set times
                 this.targetManager.updateRiseSetTimes();
-                this.plotManager.updatePlot();
             }
         }
 
@@ -209,11 +200,10 @@
             const lon = parseFloat(document.getElementById('longitude').value);
 
             if (!isNaN(lat) && !isNaN(lon)) {
-                this.locationManager.setLocation(lat, lon, 'Custom Location');
+                this.locationManager.setCustomLocation(lat, lon);
 
-                // Location changed - update rise/set times and plot
+                // Location changed - update rise/set times
                 this.targetManager.updateRiseSetTimes();
-                this.plotManager.updatePlot();
             }
         }
 
@@ -321,7 +311,6 @@
                 // Trigger immediate update of observing info and plot for the new target
                 setTimeout(() => {
                     this.targetManager.updateTargetsObservingInfo();
-                    this.plotManager.updatePlot();
                 }, 100);
             } catch (error) {
                 // Provide more specific error feedback based on the parsing error

@@ -19,7 +19,6 @@
     const LocationManager = await loadModule('./managers/LocationManager.js', 'LocationManager');
     const TimeManager = await loadModule('./managers/TimeManager.js', 'TimeManager');
     const TargetManager = await loadModule('./managers/TargetManager.js', 'TargetManager');
-    const PlotManager = await loadModule('./managers/PlotManager.js', 'PlotManager');
     const CustomDropdown = await loadModule('./components/CustomDropdown.js', 'CustomDropdown');
 
     // Load utilities
@@ -33,7 +32,6 @@
         LocationManager,
         TimeManager,
         TargetManager,
-        PlotManager,
         CustomDropdown,
         CoordinateParser,
         CoordinateFormatter,
