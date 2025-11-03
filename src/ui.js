@@ -153,15 +153,17 @@
         }
 
         initializeUI() {
-            // Set today's date
-            const today = new Date().toISOString().split('T')[0];
-            document.getElementById('observation-date').value = today;
-
             // Initialize custom dropdowns
             this.initializeCustomDropdowns();
 
             // Initialize location UI
             this.updateLocationUI();
+
+            // Set observation date to tonight's observing session (after location is initialized)
+            const location = this.locationManager.getLocation();
+            const tonightDate = window.MinairAstronomy.getLocalDayOfTonightAtNow(location.lon);
+            const dateString = tonightDate.toISOString().split('T')[0];
+            document.getElementById('observation-date').value = dateString;
 
             // Initialize plot manager
             setTimeout(() => {
