@@ -176,6 +176,15 @@
                     // ignore timing errors
                 }
             }, 1000);
+
+            // Redraw the plot every 60 seconds to keep visuals (clock labels, min-alt line, etc.) up-to-date
+            setInterval(() => {
+                try {
+                    this.plotManager.redraw();
+                } catch (e) {
+                    // ignore redraw errors
+                }
+            }, 60000);
         }
 
         initializeCustomDropdowns() {
