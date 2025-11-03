@@ -30,17 +30,17 @@
         return date.getTime() / 86400000 + 2440587.5;
     }
 
-    function gmstFromJulian(JDUTC) {
+    function gmstFromJulian(JD) {
         // Approximate Greenwich Mean Sidereal Time in hours
         // Source: Meeus simplified formula
-        const D = JDUTC - 2451545.0;
+        const D = JD - 2451545.0;
         const gmst = 18.697374558 + 24.06570982441908 * D;
         return wrapHours(gmst);
     }
 
-    function lstFromJulian(JDUTC, lonDeg) {
+    function lstFromJulian(JD, lonDeg) {
         // lonDeg: east positive
-        const gmst = gmstFromJulian(JDUTC);
+        const gmst = gmstFromJulian(JD);
         const lonHours = deg2Hour(lonDeg);
         const lstHours = wrapHours(gmst + lonHours);
         return lstHours;
@@ -99,10 +99,11 @@
     }
 
     // ---- Solar position (approximate) ----
-    function sunRaDec(JDUTC) {
+    function sunRaDec(date) {
+        JD = toJulianDate(date);
         // Compute approximate Sun RA/Dec (J2000) using simplified solar position
         // Based on NOAA/astronomical approximations (sufficient for twilight estimation)
-        const T = (JDUTC - 2451545.0) / 36525.0;
+        const T = (JD - 2451545.0) / 36525.0;
         // Sun's mean longitude
         let L0 = 280.46646 + 36000.76983 * T + 0.0003032 * T * T;
         L0 = wrapDeg(L0);
@@ -146,8 +147,8 @@
         const dayTimeSeries = createObsDayTimeSeries(obsLonDeg, obsDay, 5, 12, 24);
         let riseTime = null;
         let setTime = null;
-        const altSeries = dayTimeSeries.map(dateUTC =>
-            calcAltAz(raHours, decDeg, dateUTC, obsLatDeg, obsLonDeg).alt
+        const altSeries = dayTimeSeries.map(date =>
+            calcAltAz(raHours, decDeg, date, obsLatDeg, obsLonDeg).alt
         );
         const n = dayTimeSeries.length;
 
