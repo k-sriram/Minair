@@ -56,9 +56,6 @@
 
             // Timezone selector
             document.getElementById('timezone-select').addEventListener('change', () => {
-                // Update TimeCoordinator with new timezone
-                this.updateTimeCoordinator();
-
                 // Time will update on next clock tick
                 // Timezone changed - update rise/set display
                 this.targetManager.updateRiseSetTimes();
@@ -231,7 +228,7 @@
             const lon = parseFloat(document.getElementById('longitude').value);
 
             if (!isNaN(lat) && !isNaN(lon)) {
-                this.locationManager.setCustomLocation(lat, lon);
+                this.locationManager.setLocation(lat, lon, 'Custom Location');
 
                 // Location changed - update rise/set times and plot
                 this.targetManager.updateRiseSetTimes();
