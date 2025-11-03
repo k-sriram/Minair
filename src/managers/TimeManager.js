@@ -138,4 +138,15 @@ export class TimeManager {
         const minutes = parseInt(match[3] || '0');
         return sign * (hours * 60 + minutes); // return offset in minutes
     }
+
+    getClockLabel() {
+        if (this.selectedTimeReference === 'utc') {
+            return 'UTC';
+        } else if (this.selectedTimeReference === 'lst') {
+            return 'LST';
+        } else { // 'user' timezone
+            const selectedTimezone = this.getSelectedTimezone();
+            return selectedTimezone || 'UTC';
+        }
+    }
 }
