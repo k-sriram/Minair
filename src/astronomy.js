@@ -180,6 +180,20 @@
         return {time: timeSeries, alt: altitudeSeries};
     }
 
+    function getLocalDayOfTonightAtNow(obsLonDeg) {
+        return getLocalDayOfTonightAtDate(obsLonDeg, new Date());
+    }
+
+    function getLocalDayOfTonightAtDate(obsLonDeg, date) {
+        const localDate = new Date(date.getTime() + hours2ms(deg2Hour((obsLonDeg))));
+        // If time is before noon, tonight is yesterday's else today's
+        if (localDate.getUTCHours() < 12) {
+            localDate.setUTCDate(localDate.getDate() - 1);
+        }
+        localDate.setUTCHours(0, 0, 0, 0);
+        return localDate;
+    }
+
     // Expose API
     global.MinairAstronomy = {
         calcAltAz,
@@ -189,5 +203,6 @@
         calcRiseSet,
         calcSunriseSunset,
         calcAltSeries,
+        getLocalDayOfTonightAtNow,
     };
 })(window);
