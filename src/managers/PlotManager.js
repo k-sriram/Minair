@@ -22,11 +22,11 @@ export class PlotManager {
             ]
         };
         this.minAltitude = 0;
-        this.maxAltitude = 90;
         this.startTime = null;
         this.endTime = null;
         this.timeReference = 'utc'; // Default time reference
         this.xticks = [];
+        this.xnow = null;
     }
 
     initialize() {
@@ -40,6 +40,13 @@ export class PlotManager {
 
         this.ctx = this.canvas.getContext('2d');
         this.setupCanvas();
+
+        // Read initial minAltitude value from DOM
+        const minAltInput = document.getElementById('min-altitude');
+        if (minAltInput) {
+            this.minAltitude = parseFloat(minAltInput.value) || 0;
+        }
+
         this.isInitialized = true;
 
         console.log('PlotManager initialized');
@@ -200,6 +207,11 @@ export class PlotManager {
     }
 
     updateXTicks() {
+        // Current time marker
+        const now = new Date();
+        const nowFraction = (now - this.startTime) / (this.endTime - this.startTime);
+        this.xnow = (nowFraction >= 0 && nowFraction <= 1) ? nowFraction : null;
+
         this.xticks = [];
         if (!this.startTime || !this.endTime) return;
 
@@ -268,6 +280,25 @@ export class PlotManager {
         }
 
         this.ctx.setLineDash([]);
+        this.ctx.lineWidth = 2;
+
+        // A solid line at minAltitude
+        const minAltitude = this.minAltitude;
+        if (minAltitude !== undefined) {
+            const y = plotArea.bottom - (minAltitude / 90) * (plotArea.bottom - plotArea.top);
+            this.ctx.beginPath();
+            this.ctx.moveTo(plotArea.left, y);
+            this.ctx.lineTo(plotArea.right, y);
+            this.ctx.stroke();
+        }
+        // Current time indicator
+        if (this.xnow !== null) {
+            const x = plotArea.left + this.xnow * (plotArea.right - plotArea.left);
+            this.ctx.beginPath();
+            this.ctx.moveTo(x, plotArea.top);
+            this.ctx.lineTo(x, plotArea.bottom);
+            this.ctx.stroke();
+        }
     }
 
     drawAxes(plotArea, width, height) {
