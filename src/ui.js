@@ -24,6 +24,9 @@
             this.targetManager = new modules.TargetManager();
             this.plotManager = new modules.PlotManager();
 
+            // Store coordinate formatter for easy access
+            this.coordinateFormatter = modules.CoordinateFormatter;
+
             this.setupEventListeners();
             this.initializeUI();
         }
@@ -92,8 +95,8 @@
                         const coords = await this.targetManager.lookupCoordinates(name);
                         if (coords) {
                             // coords: { raHours, decDeg }
-                            document.getElementById('target-ra').value = this.targetManager.formatRA(coords.raHours);
-                            document.getElementById('target-dec').value = this.targetManager.formatDec(coords.decDeg);
+                            document.getElementById('target-ra').value = this.coordinateFormatter.formatRA(coords.raHours);
+                            document.getElementById('target-dec').value = this.coordinateFormatter.formatDec(coords.decDeg);
                             this.showLookupMessage('Coordinates found and filled in.', 'success');
                         } else {
                             this.showLookupMessage('No coordinates found for "' + name + '". Please check the object name.', 'error');
