@@ -16,17 +16,50 @@ export class TargetManager {
         this.loadDefaultTargets();
     }
 
+    // localStorage persistence methods
+    saveTargetsToStorage() {
+        try {
+            // Save all targets to localStorage
+            localStorage.setItem('minair-user-targets', JSON.stringify(this.targets));
+        } catch (error) {
+            console.warn('Failed to save targets to localStorage:', error);
+        }
+    }
+
+    loadTargetsFromStorage() {
+        try {
+            const saved = localStorage.getItem('minair-user-targets');
+            return saved ? JSON.parse(saved) : [];
+        } catch (error) {
+            console.warn('Failed to load targets from localStorage:', error);
+            return [];
+        }
+    }
+
     async loadDefaultTargets() {
         try {
-            const response = await fetch('data/targets.json');
-            const defaultTargets = await response.json();
-            // Convert loaded targets to our internal format
-            this.targets = defaultTargets.map(target => ({
-                name: target.name,
-                ra: target.raHours || target.ra, // Use numeric raHours if available, fallback to ra
-                dec: target.decDeg || target.dec, // Use numeric decDeg if available, fallback to dec
-                id: Date.now() + Math.random() // Generate unique ID
-            }));
+            // Load user targets from localStorage first
+            const userTargets = this.loadTargetsFromStorage();
+
+            // If user targets exist, use only those (skip defaults)
+            if (userTargets.length > 0) {
+                this.targets = userTargets;
+            } else {
+                // No user targets found - load default targets from JSON
+                const response = await fetch('data/targets.json');
+                const defaultTargets = await response.json();
+
+                // Convert loaded default targets to internal format
+                const defaultTargetsFormatted = defaultTargets.map(target => ({
+                    name: target.name,
+                    ra: target.raHours || target.ra,
+                    dec: target.decDeg || target.dec,
+                    id: 'default-' + target.name.toLowerCase().replace(/\s+/g, '-')
+                }));
+
+                this.targets = defaultTargetsFormatted;
+            }
+
             this.updateTargetTable();
             // After populating table, compute current alt/az and rise/set for each target
             this.updateTargetsObservingInfo();
@@ -38,7 +71,11 @@ export class TargetManager {
                 }, 200);
             }
         } catch (error) {
-            console.error('Failed to load default targets:', error);
+            console.error('Failed to load targets:', error);
+            // Fallback to user targets if available, otherwise empty list
+            this.targets = this.loadTargetsFromStorage();
+            this.updateTargetTable();
+            this.updateTargetsObservingInfo();
         }
     }
 
@@ -47,16 +84,18 @@ export class TargetManager {
             name: name.trim(),
             ra: parseRA(ra),
             dec: parseDec(dec),
-            id: Date.now() // Simple ID generation
+            id: Date.now() + Math.random() // Simple ID generation with random component
         };
         this.targets.push(target);
         this.updateTargetTable();
+        this.saveTargetsToStorage(); // Persist to localStorage
         return target;
     }
 
     removeTarget(id) {
         this.targets = this.targets.filter(t => t.id !== id);
         this.updateTargetTable();
+        this.saveTargetsToStorage(); // Persist to localStorage
         // Update plot after removing target
         const app = window.minairApp;
         if (app && app.updatePlot) {
@@ -113,9 +152,16 @@ export class TargetManager {
             <td class="cell-rise">--:--</td>
             <td class="cell-set">--:--</td>
             <td class="form-row">
-                <button class="btn btn-secondary btn-compact" onclick="minairApp.targetManager.removeTarget(${target.id})">Remove</button>
+                <button class="btn btn-secondary btn-compact" data-target-id="${target.id}">Remove</button>
             </td>
         `;
+
+        // Add click handler for remove button
+        const removeBtn = row.querySelector('button');
+        removeBtn.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent row click
+            this.removeTarget(target.id);
+        });
 
         // Add click handler for plot interaction
         row.addEventListener('click', (e) => {
