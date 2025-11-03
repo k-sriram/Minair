@@ -149,8 +149,8 @@ export class PlotManager {
         };
 
         this.drawGrid(plotArea, width, height);
-        this.drawAxes(plotArea, width, height);
         this.drawTargetCurves(plotArea);
+        this.drawAxes(plotArea, width, height);
         this.drawLegend(plotArea, width, height);
     }
 
@@ -247,9 +247,11 @@ export class PlotManager {
 
             for (let i = 0; i < data.times.length; i++) {
                 const time = data.times[i];
-                const altitude = data.altitudes[i];
+                let altitude = data.altitudes[i];
 
-                if (altitude < 0) continue; // Skip points below horizon
+                // Clamp altitude to [0, 90] for visual clipping
+                if (altitude < 0) altitude = 0;
+                if (altitude > 90) altitude = 90;
 
                 // Calculate x position based on time
                 const timeOffset = time.getTime() - startTime;
