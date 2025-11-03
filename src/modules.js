@@ -24,7 +24,7 @@
 
     // Load utilities
     const CoordinateParser = await loadModule('./utils/CoordinateParser.js', 'parseCoordinate');
-    const CoordinateFormatter = await loadModule('./utils/CoordinateFormatter.js', 'formatRA');
+    const CoordinateFormatter = await import('./utils/CoordinateFormatter.js');
     const TimeConverter = await loadModule('./utils/TimeConverter.js', 'formatDateHHMMWithTimeZone');
 
     // Make them available globally for the main app
