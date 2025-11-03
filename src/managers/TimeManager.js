@@ -58,9 +58,9 @@ export class TimeManager {
         const utcTime = this.currentTime.toUTCString().split(' ')[4];
         document.getElementById('utc-time').textContent = utcTime;
 
-        // Local Time (using selected timezone)
-        const localTime = this.getTimeForSelectedTimezone();
-        document.getElementById('local-time').textContent = localTime;
+        // User Time (using selected timezone)
+        const userTime = this.getTimeForSelectedTimezone();
+        document.getElementById('user-time').textContent = userTime;
 
         // Local Sidereal Time - accumulate at sidereal rate
         // Sidereal rate: 1.00273790935 sidereal seconds per solar second
