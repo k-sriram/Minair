@@ -23,17 +23,7 @@ export function convertDateToSelectedTimeReference(dateUTC, timeManager) {
         lstDate.setUTCHours(Math.floor(lstHours), Math.floor((lstHours % 1) * 60), 0, 0);
         return lstDate;
     } else { // 'user' or selected timezone
-        const timezoneSelect = document.getElementById('timezone-select');
-        if (!timezoneSelect) return dateUTC;
-
-        const selectedTimezone = timezoneSelect.value;
-        const match = selectedTimezone.match(/UTC([+-])(\d{1,2})(?::(\d{2}))?/);
-        if (!match) return dateUTC;
-
-        const sign = match[1] === '+' ? 1 : -1;
-        const hours = parseInt(match[2]);
-        const minutes = parseInt(match[3] || '0');
-        const offsetMinutes = sign * (hours * 60 + minutes);
+        const offsetMinutes = timeManager.getUserTimezoneOffset();
 
         // Convert from UTC to selected timezone
         const timezoneTime = new Date(dateUTC.getTime() + (offsetMinutes * 60000));

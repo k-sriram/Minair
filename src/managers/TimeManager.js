@@ -82,16 +82,10 @@ export class TimeManager {
         const timezoneSelect = document.getElementById('timezone-select');
         if (!timezoneSelect) return this.currentTime.toLocaleTimeString([], { hour12: false });
 
-        const selectedTimezone = timezoneSelect.value;
-
-        // Parse the timezone offset (e.g., "UTC+5:30" -> +5.5 hours)
-        const match = selectedTimezone.match(/UTC([+-])(\d{1,2})(?::(\d{2}))?/);
-        if (!match) return this.currentTime.toLocaleTimeString([], { hour12: false });
-
-        const sign = match[1] === '+' ? 1 : -1;
-        const hours = parseInt(match[2]);
-        const minutes = parseInt(match[3] || '0');
-        const offsetMinutes = sign * (hours * 60 + minutes);
+        const offsetMinutes = this.getUserTimezoneOffset();
+        if (offsetMinutes === 0 && !timezoneSelect.value.includes('UTC+0')) {
+            return this.currentTime.toLocaleTimeString([], { hour12: false });
+        }
 
         // Calculate time in selected timezone
         const utcTime = this.currentTime.getTime() + (this.currentTime.getTimezoneOffset() * 60000);
@@ -125,5 +119,19 @@ export class TimeManager {
         this.selectedTimeReference = reference;
         this.saveTimeReference(reference);
         this.updateActiveClockIndicator();
+    }
+
+    getUserTimezoneOffset() {
+        const timezoneSelect = document.getElementById('timezone-select');
+        if (!timezoneSelect) return 0;
+
+        const selectedTimezone = timezoneSelect.value;
+        const match = selectedTimezone.match(/UTC([+-])(\d{1,2})(?::(\d{2}))?/);
+        if (!match) return 0;
+
+        const sign = match[1] === '+' ? 1 : -1;
+        const hours = parseInt(match[2]);
+        const minutes = parseInt(match[3] || '0');
+        return sign * (hours * 60 + minutes); // return offset in minutes
     }
 }
