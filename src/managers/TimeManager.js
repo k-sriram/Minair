@@ -11,7 +11,7 @@ export class TimeManager {
 
     loadTimeReference() {
         const saved = localStorage.getItem('minair-time-reference');
-        return saved || 'local';
+        return saved || 'utc';
     }
 
     saveTimeReference(reference) {
