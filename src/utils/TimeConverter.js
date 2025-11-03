@@ -22,7 +22,7 @@ export function convertDateToSelectedTimeReference(dateUTC, timeManager) {
         const lstDate = new Date(dateUTC);
         lstDate.setUTCHours(Math.floor(lstHours), Math.floor((lstHours % 1) * 60), 0, 0);
         return lstDate;
-    } else { // 'local' or selected timezone
+    } else { // 'user' or selected timezone
         const timezoneSelect = document.getElementById('timezone-select');
         if (!timezoneSelect) return dateUTC;
 
