@@ -19,9 +19,11 @@ export class PlotManager {
                 'var(--target-color-7)', 'var(--target-color-8)'
             ]
         };
-        this.timeRange = 24; // hours
         this.minAltitude = 0;
         this.maxAltitude = 90;
+        this.sunrise = null;
+        this.sunset = null;
+        this.timeReference = 'utc'; // Default time reference
     }
 
     initialize() {
@@ -62,12 +64,31 @@ export class PlotManager {
         const { obsLat, obsLon, obsDay } = observationParams;
         this.targetData.clear();
 
+        // Calculate sunrise and sunset for the observation day
+        try {
+            const sunriseSunset = window.MinairAstronomy.calcSunriseSunset(obsLat, obsLon, obsDay);
+            this.sunrise = sunriseSunset.riseTime;
+            this.sunset = sunriseSunset.setTime;
+        } catch (error) {
+            console.error('Error calculating sunrise/sunset:', error);
+            this.sunrise = null;
+            this.sunset = null;
+        }
+
         targets.forEach((target, index) => {
             try {
                 // Get altitude series for 24 hours with 10-minute intervals
                 const altData = window.MinairAstronomy.calcAltSeries(
                     target.ra, target.dec, obsLat, obsLon, obsDay, 10
                 );
+
+                // Debug: Logging some of the raw data points.
+                // the altData.time and .alt are too big. Let's log at 0%, 25%, 50%, 75%, 100%
+                const len = altData.time.length;
+                console.log(`Altitude data for ${target.name}:`);
+                [0, Math.floor(len * 0.25), Math.floor(len * 0.5), Math.floor(len * 0.75), len - 1].forEach(i => {
+                    console.log(`  Time: ${altData.time[i].toISOString()}, Altitude: ${altData.alt[i].toFixed(2)}°`);
+                });
 
                 this.targetData.set(target.id, {
                     name: target.name,
@@ -298,6 +319,11 @@ export class PlotManager {
 
     setMinAltitude(minAlt) {
         this.minAltitude = minAlt;
+        this.redraw();
+    }
+
+    setTimeReference(timeRef) {
+        this.timeReference = timeRef;
         this.redraw();
     }
 

@@ -44,8 +44,9 @@
                 clock.addEventListener('click', (e) => {
                     const timeRef = e.currentTarget.dataset.timezone;
                     this.timeManager.setTimeReference(timeRef);
-                    // Time reference changed - update rise/set display
+                    // Time reference changed - update rise/set display and plot
                     this.targetManager.updateRiseSetTimes();
+                    this.plotManager.setTimeReference(timeRef);
                 });
             });
 
@@ -161,6 +162,8 @@
             // Initialize plot manager
             setTimeout(() => {
                 this.plotManager.initialize();
+                // Set initial time reference from TimeManager
+                this.plotManager.setTimeReference(this.timeManager.selectedTimeReference);
                 this.updatePlot();
             }, 100);
 
