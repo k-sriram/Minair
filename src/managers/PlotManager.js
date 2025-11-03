@@ -64,17 +64,32 @@ export class PlotManager {
         const { obsLat, obsLon, obsDay } = observationParams;
         this.targetData.clear();
 
-        // Calculate sunrise and sunset for the observation day
+        // Calculate start and end time for the observation night
+        let startTime = null;
+        let endTime = null;
         try {
             const sunriseSunset = window.MinairAstronomy.calcSunriseSunset(obsLat, obsLon, obsDay);
-            this.sunrise = sunriseSunset.riseTime;
-            this.sunset = sunriseSunset.setTime;
+            if (!sunriseSunset.riseTime || !sunriseSunset.setTime) {
+                startTime = null;
+                endTime = null;
+            } else {
+                startTime = sunriseSunset.setTime;
+                endTime = sunriseSunset.riseTime;
+            }
         } catch (error) {
-            console.error('Error calculating sunrise/sunset:', error);
-            this.sunrise = null;
-            this.sunset = null;
+            console.error('Error calculating start/end time:', error);
+            startTime = null;
+            endTime = null;
         }
+        if (!startTime || !endTime || startTime >= endTime) {
+            // Set to null
+            startTime = null;
+            endTime = null;
+        }
+        this.startTime = null;
+        this.endTime = null;
 
+        // Calculate altitude data for each target
         targets.forEach((target, index) => {
             try {
                 // Get altitude series for 24 hours with 10-minute intervals
@@ -90,13 +105,39 @@ export class PlotManager {
                     console.log(`  Time: ${altData.time[i].toISOString()}, Altitude: ${altData.alt[i].toFixed(2)}°`);
                 });
 
+                // Trim the time data if startTime and endTime are defined
+                const trimmedTimes = [];
+                const trimmedAlts = [];
+                if (startTime && endTime) {
+                    for (let i = 0; i < altData.time.length; i++) {
+                        const time = altData.time[i];
+                        if (time >= startTime && time <= endTime) {
+                            trimmedTimes.push(time);
+                            trimmedAlts.push(altData.alt[i]);
+                        }
+                    }
+                    console.log(`Trimmed data for ${target.name}: ${trimmedTimes.length} points between ${trimmedTimes[0].toISOString()} and ${trimmedTimes[trimmedTimes.length - 1].toISOString()}`);
+                } else {
+                    // If no start/end time, use full data
+                    trimmedTimes.push(...altData.time);
+                    trimmedAlts.push(...altData.alt);
+                }
+
                 this.targetData.set(target.id, {
                     name: target.name,
-                    times: altData.time,
-                    altitudes: altData.alt,
+                    times: trimmedTimes,
+                    altitudes: trimmedAlts,
                     color: this.plotConfig.targetColors[index % this.plotConfig.targetColors.length],
                     visible: this.selectedTargets.has(target.id) || this.selectedTargets.size === 0
                 });
+
+                // Set plot time range
+                if (!this.startTime || trimmedTimes[0] < this.startTime) {
+                    this.startTime = trimmedTimes[0];
+                }
+                if (!this.endTime || trimmedTimes[trimmedTimes.length - 1] > this.endTime) {
+                    this.endTime = trimmedTimes[trimmedTimes.length - 1];
+                }
             } catch (error) {
                 console.error(`Error calculating altitude data for ${target.name}:`, error);
             }
