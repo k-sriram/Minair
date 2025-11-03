@@ -1,3 +1,5 @@
+import { formatDateHHMM } from "../utils/CoordinateFormatter.js";
+
 /* PlotManager.js — Plot management for Minair altitude tracking
  */
 export class PlotManager {
@@ -21,9 +23,10 @@ export class PlotManager {
         };
         this.minAltitude = 0;
         this.maxAltitude = 90;
-        this.sunrise = null;
-        this.sunset = null;
+        this.startTime = null;
+        this.endTime = null;
         this.timeReference = 'utc'; // Default time reference
+        this.xticks = [];
     }
 
     initialize() {
@@ -189,10 +192,56 @@ export class PlotManager {
             bottom: height - this.plotConfig.padding.bottom
         };
 
+        this.updateXTicks();
         this.drawGrid(plotArea, width, height);
         this.drawTargetCurves(plotArea);
         this.drawAxes(plotArea, width, height);
         this.drawLegend(plotArea, width, height);
+    }
+
+    updateXTicks() {
+        this.xticks = [];
+        if (!this.startTime || !this.endTime) return;
+
+        // Calculate start and end times in the current time reference
+        let start = new Date(this.startTime);
+        let end = new Date(this.endTime);
+        if (this.timeReference === 'utc') {
+            // UTC times, no change needed
+        }
+        else if (this.timeReference === 'lst') {
+            // Convert to LST-based times
+            const obsLon = window.minairApp.getObservationParameters().obsLon;
+            const lstStartHours = window.MinairAstronomy.lstFromUTC(this.startTime, obsLon);
+            const lstEndHours = window.MinairAstronomy.lstFromUTC(this.endTime, obsLon);
+            start.setUTCHours(Math.floor(lstStartHours), Math.floor((lstStartHours % 1) * 60), 0, 0);
+            end.setUTCHours(Math.floor(lstEndHours), Math.floor((lstEndHours % 1) * 60), 0, 0);
+            if (end <= start) {
+                end.setUTCDate(end.getUTCDate() + 1);
+            }
+        } else {
+            // User timezone or selected timezone
+            const offsetMinutes = window.minairApp.timeManager.getUserTimezoneOffset();
+            start = new Date(this.startTime.getTime() + (offsetMinutes * 60000));
+            end = new Date(this.endTime.getTime() + (offsetMinutes * 60000));
+        }
+
+        // Get all hour marks between start and end
+        const current = new Date(start);
+        current.setUTCHours(current.getUTCHours() + 1, 0, 0, 0);
+        while (current <= end) {
+            // Calculate fraction of position between start and end
+            const fraction = (current - start) / (end - start);
+            this.xticks.push([new Date(current), fraction]);
+            current.setUTCHours(current.getUTCHours() + 1);
+        }
+        // Ensure that at least two ticks exist
+        if (this.xticks.length < 2) {
+            this.xticks = [
+                [new Date(start), 0],
+                [new Date(end), 1]
+            ];
+        }
     }
 
     drawGrid(plotArea, width, height) {
@@ -210,8 +259,8 @@ export class PlotManager {
         }
 
         // Vertical grid lines (time)
-        for (let hour = 0; hour <= 24; hour += 3) {
-            const x = plotArea.left + (hour / 24) * (plotArea.right - plotArea.left);
+        for (const [tickTime, fraction] of this.xticks) {
+            const x = plotArea.left + fraction * (plotArea.right - plotArea.left);
             this.ctx.beginPath();
             this.ctx.moveTo(x, plotArea.top);
             this.ctx.lineTo(x, plotArea.bottom);
@@ -241,10 +290,9 @@ export class PlotManager {
 
         // X-axis labels (time)
         this.ctx.textAlign = 'center';
-        for (let hour = 0; hour <= 24; hour += 6) {
-            const x = plotArea.left + (hour / 24) * (plotArea.right - plotArea.left);
-            const label = hour === 24 ? '00:00' : `${hour.toString().padStart(2, '0')}:00`;
-            this.ctx.fillText(label, x, plotArea.bottom + 20);
+        for (const [tickTime, fraction] of this.xticks) {
+            const x = plotArea.left + fraction * (plotArea.right - plotArea.left);
+            this.ctx.fillText(formatDateHHMM(tickTime), x, plotArea.bottom + 20);
         }
 
         // Y-axis labels (altitude)
@@ -259,8 +307,10 @@ export class PlotManager {
         this.ctx.font = 'bold 14px sans-serif';
 
         // X-axis title
+        let clockLabel = window.minairApp.timeManager.getClockLabel();
+        clockLabel = !clockLabel ? 'Time' : `Time (${clockLabel})`;
         this.ctx.textAlign = 'center';
-        this.ctx.fillText('Time (UTC)', (plotArea.left + plotArea.right) / 2, height - 10);
+        this.ctx.fillText(clockLabel, (plotArea.left + plotArea.right) / 2, height - 10);
 
         // Y-axis title (rotated)
         this.ctx.save();
