@@ -121,11 +121,15 @@ export class TimeManager {
         this.updateActiveClockIndicator();
     }
 
-    getUserTimezoneOffset() {
+    getSelectedTimezone() {
         const timezoneSelect = document.getElementById('timezone-select');
-        if (!timezoneSelect) return 0;
+        if (!timezoneSelect) return null;
+        return timezoneSelect.value;
+    }
 
-        const selectedTimezone = timezoneSelect.value;
+    getUserTimezoneOffset() {
+        const selectedTimezone = this.getSelectedTimezone();
+        if (!selectedTimezone) return 0;
         const match = selectedTimezone.match(/UTC([+-])(\d{1,2})(?::(\d{2}))?/);
         if (!match) return 0;
 
