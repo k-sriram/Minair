@@ -519,6 +519,10 @@ input:-ms-input-placeholder {
 .target-table td {
     padding: 0.75rem 1rem;
     border-bottom: 1px solid var(--border-color);
+}
+
+.target-table tbody tr {
+    cursor: pointer;
     color: var(--text-primary);
 }
 
@@ -533,10 +537,6 @@ input:-ms-input-placeholder {
 
 .target-table tbody tr.target-selected:hover {
     background: var(--accent-hover);
-}
-
-.target-table tbody tr {
-    cursor: pointer;
 }
 
 /* Add Target Form */
