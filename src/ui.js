@@ -32,6 +32,7 @@
             // Theme selector
             document.getElementById('theme-select').addEventListener('change', (e) => {
                 this.themeManager.switchTheme(e.target.value);
+                this.plotManager.resetTheme();
             });
 
             // Location selector

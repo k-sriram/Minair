@@ -327,6 +327,26 @@ export class PlotManager {
         this.redraw();
     }
 
+    resetTheme() {
+        // Refresh plotConfig color values from current CSS variables
+        const style = getComputedStyle(document.documentElement);
+        this.plotConfig.gridColor = style.getPropertyValue('--border-color').trim();
+        this.plotConfig.textColor = style.getPropertyValue('--text-secondary').trim();
+        this.plotConfig.backgroundColor = style.getPropertyValue('--bg-secondary').trim();
+        this.plotConfig.axisColor = style.getPropertyValue('--text-primary').trim();
+        this.plotConfig.targetColors = [
+            style.getPropertyValue('--target-color-1').trim(),
+            style.getPropertyValue('--target-color-2').trim(),
+            style.getPropertyValue('--target-color-3').trim(),
+            style.getPropertyValue('--target-color-4').trim(),
+            style.getPropertyValue('--target-color-5').trim(),
+            style.getPropertyValue('--target-color-6').trim(),
+            style.getPropertyValue('--target-color-7').trim(),
+            style.getPropertyValue('--target-color-8').trim()
+        ];
+        this.redraw();
+    }
+
     destroy() {
         this.targetData.clear();
         this.selectedTargets.clear();
