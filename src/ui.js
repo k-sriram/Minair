@@ -22,6 +22,7 @@
             this.locationManager = new modules.LocationManager();
             this.timeManager = new modules.TimeManager(this.locationManager);
             this.targetManager = new modules.TargetManager();
+            this.plotManager = new modules.PlotManager();
 
             this.setupEventListeners();
             this.initializeUI();
@@ -118,27 +119,32 @@
 
             // Observation date changes
             document.getElementById('observation-date').addEventListener('change', () => {
-                // Date changed - update rise/set times
+                // Date changed - update rise/set times and plot
                 this.targetManager.updateRiseSetTimes();
+                this.updatePlot();
             });
 
             // Min altitude changes
-            document.getElementById('min-altitude').addEventListener('change', () => {
+            document.getElementById('min-altitude').addEventListener('change', (e) => {
+                const minAlt = parseFloat(e.target.value) || 0;
+                this.plotManager.setMinAltitude(minAlt);
                 // Min altitude changed - update rise/set times
                 this.targetManager.updateRiseSetTimes();
             });
 
-            // Graph toggle button
-            const graphBtn = document.getElementById('toggle-graph-btn');
-            if (graphBtn) {
-                graphBtn.addEventListener('click', () => {
-                    console.log('Graph toggle button clicked!');
-                    // Plot functionality will be re-implemented later
-                });
-                console.log('Graph toggle button event listener added');
-            } else {
-                console.error('Graph toggle button not found!');
-            }
+            // Plot controls
+            document.getElementById('plot-clear-selection')?.addEventListener('click', () => {
+                this.plotManager.clearSelection();
+            });
+
+            document.getElementById('plot-refresh')?.addEventListener('click', () => {
+                this.updatePlot();
+            });
+
+            // Window resize handler for plot
+            window.addEventListener('resize', () => {
+                this.plotManager.handleResize();
+            });
         }
 
         initializeUI() {
@@ -151,6 +157,12 @@
 
             // Initialize location UI
             this.updateLocationUI();
+
+            // Initialize plot manager
+            setTimeout(() => {
+                this.plotManager.initialize();
+                this.updatePlot();
+            }, 100);
 
             // Update alt/az every second for real-time tracking
             setInterval(() => {
@@ -190,8 +202,9 @@
                 customLocation.style.display = 'none';
                 this.locationManager.setObservatory(value);
 
-                // Location changed - update rise/set times
+                // Location changed - update rise/set times and plot
                 this.targetManager.updateRiseSetTimes();
+                this.updatePlot();
             }
         }
 
@@ -202,8 +215,9 @@
             if (!isNaN(lat) && !isNaN(lon)) {
                 this.locationManager.setCustomLocation(lat, lon);
 
-                // Location changed - update rise/set times
+                // Location changed - update rise/set times and plot
                 this.targetManager.updateRiseSetTimes();
+                this.updatePlot();
             }
         }
 
@@ -294,6 +308,12 @@
             messageEl.className = 'lookup-message';
         }
 
+        updatePlot() {
+            const targets = this.targetManager.targets;
+            const observationParams = this.getObservationParameters();
+            this.plotManager.updateTargetData(targets, observationParams);
+        }
+
         addNewTarget() {
             const name = document.getElementById('target-name').value.trim();
             const ra = document.getElementById('target-ra').value.trim();
@@ -311,6 +331,7 @@
                 // Trigger immediate update of observing info and plot for the new target
                 setTimeout(() => {
                     this.targetManager.updateTargetsObservingInfo();
+                    this.updatePlot();
                 }, 100);
             } catch (error) {
                 // Provide more specific error feedback based on the parsing error

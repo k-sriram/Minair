@@ -1,0 +1,309 @@
+/* PlotManager.js — Plot management for Minair altitude tracking
+ */
+export class PlotManager {
+    constructor() {
+        this.canvas = null;
+        this.ctx = null;
+        this.isInitialized = false;
+        this.targetData = new Map(); // Store plot data for each target
+        this.selectedTargets = new Set(); // Track which targets to plot
+        this.plotConfig = {
+            padding: { top: 40, right: 120, bottom: 60, left: 80 },
+            gridColor: 'var(--border-color)',
+            textColor: 'var(--text-secondary)',
+            backgroundColor: 'var(--bg-secondary)',
+            axisColor: 'var(--text-primary)',
+            targetColors: [
+                'var(--target-color-1)', 'var(--target-color-2)', 'var(--target-color-3)',
+                'var(--target-color-4)', 'var(--target-color-5)', 'var(--target-color-6)',
+                'var(--target-color-7)', 'var(--target-color-8)'
+            ]
+        };
+        this.timeRange = 24; // hours
+        this.minAltitude = 0;
+        this.maxAltitude = 90;
+    }
+
+    initialize() {
+        if (this.isInitialized) return;
+
+        this.canvas = document.getElementById('altitude-plot-canvas');
+        if (!this.canvas) {
+            console.error('Plot canvas not found');
+            return;
+        }
+
+        this.ctx = this.canvas.getContext('2d');
+        this.setupCanvas();
+        this.isInitialized = true;
+
+        console.log('PlotManager initialized');
+    }
+
+    setupCanvas() {
+        // Set canvas size to match container
+        const container = this.canvas.parentElement;
+        const rect = container.getBoundingClientRect();
+
+        // Use device pixel ratio for crisp rendering
+        const dpr = window.devicePixelRatio || 1;
+        this.canvas.width = rect.width * dpr;
+        this.canvas.height = 400 * dpr; // Fixed height for plot
+        this.canvas.style.width = rect.width + 'px';
+        this.canvas.style.height = '400px';
+
+        this.ctx.scale(dpr, dpr);
+        this.ctx.imageSmoothingEnabled = true;
+    }
+
+    updateTargetData(targets, observationParams) {
+        if (!this.isInitialized || !targets || targets.length === 0) return;
+
+        const { obsLat, obsLon, obsDay } = observationParams;
+        this.targetData.clear();
+
+        targets.forEach((target, index) => {
+            try {
+                // Get altitude series for 24 hours with 10-minute intervals
+                const altData = window.MinairAstronomy.calcAltSeries(
+                    target.ra, target.dec, obsLat, obsLon, obsDay, 10
+                );
+
+                this.targetData.set(target.id, {
+                    name: target.name,
+                    times: altData.time,
+                    altitudes: altData.alt,
+                    color: this.plotConfig.targetColors[index % this.plotConfig.targetColors.length],
+                    visible: this.selectedTargets.has(target.id) || this.selectedTargets.size === 0
+                });
+            } catch (error) {
+                console.error(`Error calculating altitude data for ${target.name}:`, error);
+            }
+        });
+
+        this.redraw();
+    }
+
+    toggleTarget(targetId) {
+        if (this.selectedTargets.has(targetId)) {
+            this.selectedTargets.delete(targetId);
+        } else {
+            this.selectedTargets.add(targetId);
+        }
+
+        // Update visibility in target data
+        for (const [id, data] of this.targetData) {
+            data.visible = this.selectedTargets.has(id) || this.selectedTargets.size === 0;
+        }
+
+        this.redraw();
+    }
+
+    clearSelection() {
+        this.selectedTargets.clear();
+        // Show all targets when none are selected
+        for (const data of this.targetData.values()) {
+            data.visible = true;
+        }
+        this.redraw();
+    }
+
+    redraw() {
+        if (!this.isInitialized || !this.ctx) return;
+
+        const canvas = this.canvas;
+        const rect = canvas.getBoundingClientRect();
+        const width = rect.width;
+        const height = 400;
+
+        // Clear canvas
+        this.ctx.fillStyle = this.getComputedColor(this.plotConfig.backgroundColor);
+        this.ctx.fillRect(0, 0, width, height);
+
+        const plotArea = {
+            left: this.plotConfig.padding.left,
+            right: width - this.plotConfig.padding.right,
+            top: this.plotConfig.padding.top,
+            bottom: height - this.plotConfig.padding.bottom
+        };
+
+        this.drawGrid(plotArea, width, height);
+        this.drawAxes(plotArea, width, height);
+        this.drawTargetCurves(plotArea);
+        this.drawLegend(plotArea, width, height);
+    }
+
+    drawGrid(plotArea, width, height) {
+        this.ctx.strokeStyle = this.getComputedColor(this.plotConfig.gridColor);
+        this.ctx.lineWidth = 1;
+        this.ctx.setLineDash([2, 2]);
+
+        // Horizontal grid lines (altitude)
+        for (let alt = 0; alt <= 90; alt += 15) {
+            const y = plotArea.bottom - (alt / 90) * (plotArea.bottom - plotArea.top);
+            this.ctx.beginPath();
+            this.ctx.moveTo(plotArea.left, y);
+            this.ctx.lineTo(plotArea.right, y);
+            this.ctx.stroke();
+        }
+
+        // Vertical grid lines (time)
+        for (let hour = 0; hour <= 24; hour += 3) {
+            const x = plotArea.left + (hour / 24) * (plotArea.right - plotArea.left);
+            this.ctx.beginPath();
+            this.ctx.moveTo(x, plotArea.top);
+            this.ctx.lineTo(x, plotArea.bottom);
+            this.ctx.stroke();
+        }
+
+        this.ctx.setLineDash([]);
+    }
+
+    drawAxes(plotArea, width, height) {
+        this.ctx.strokeStyle = this.getComputedColor(this.plotConfig.axisColor);
+        this.ctx.lineWidth = 2;
+        this.ctx.font = '12px sans-serif';
+        this.ctx.fillStyle = this.getComputedColor(this.plotConfig.textColor);
+
+        // X-axis
+        this.ctx.beginPath();
+        this.ctx.moveTo(plotArea.left, plotArea.bottom);
+        this.ctx.lineTo(plotArea.right, plotArea.bottom);
+        this.ctx.stroke();
+
+        // Y-axis
+        this.ctx.beginPath();
+        this.ctx.moveTo(plotArea.left, plotArea.top);
+        this.ctx.lineTo(plotArea.left, plotArea.bottom);
+        this.ctx.stroke();
+
+        // X-axis labels (time)
+        this.ctx.textAlign = 'center';
+        for (let hour = 0; hour <= 24; hour += 6) {
+            const x = plotArea.left + (hour / 24) * (plotArea.right - plotArea.left);
+            const label = hour === 24 ? '00:00' : `${hour.toString().padStart(2, '0')}:00`;
+            this.ctx.fillText(label, x, plotArea.bottom + 20);
+        }
+
+        // Y-axis labels (altitude)
+        this.ctx.textAlign = 'right';
+        for (let alt = 0; alt <= 90; alt += 15) {
+            const y = plotArea.bottom - (alt / 90) * (plotArea.bottom - plotArea.top);
+            this.ctx.fillText(`${alt}°`, plotArea.left - 10, y + 4);
+        }
+
+        // Axis titles
+        this.ctx.fillStyle = this.getComputedColor(this.plotConfig.axisColor);
+        this.ctx.font = 'bold 14px sans-serif';
+
+        // X-axis title
+        this.ctx.textAlign = 'center';
+        this.ctx.fillText('Time (UTC)', (plotArea.left + plotArea.right) / 2, height - 10);
+
+        // Y-axis title (rotated)
+        this.ctx.save();
+        this.ctx.translate(20, (plotArea.top + plotArea.bottom) / 2);
+        this.ctx.rotate(-Math.PI / 2);
+        this.ctx.textAlign = 'center';
+        this.ctx.fillText('Altitude (°)', 0, 0);
+        this.ctx.restore();
+    }
+
+    drawTargetCurves(plotArea) {
+        if (this.targetData.size === 0) return;
+
+        this.ctx.lineWidth = 2;
+
+        for (const [targetId, data] of this.targetData) {
+            if (!data.visible || !data.times || data.times.length === 0) continue;
+
+            this.ctx.strokeStyle = this.getComputedColor(data.color);
+            this.ctx.beginPath();
+
+            let firstPoint = true;
+            const startTime = data.times[0].getTime();
+            const timeSpan = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+
+            for (let i = 0; i < data.times.length; i++) {
+                const time = data.times[i];
+                const altitude = data.altitudes[i];
+
+                if (altitude < 0) continue; // Skip points below horizon
+
+                // Calculate x position based on time
+                const timeOffset = time.getTime() - startTime;
+                const timeRatio = timeOffset / timeSpan;
+                const x = plotArea.left + timeRatio * (plotArea.right - plotArea.left);
+
+                // Calculate y position based on altitude
+                const altRatio = altitude / 90;
+                const y = plotArea.bottom - altRatio * (plotArea.bottom - plotArea.top);
+
+                if (firstPoint) {
+                    this.ctx.moveTo(x, y);
+                    firstPoint = false;
+                } else {
+                    this.ctx.lineTo(x, y);
+                }
+            }
+
+            this.ctx.stroke();
+        }
+    }
+
+    drawLegend(plotArea, width, height) {
+        if (this.targetData.size === 0) return;
+
+        const legendX = plotArea.right + 10;
+        let legendY = plotArea.top + 20;
+        const lineHeight = 20;
+
+        this.ctx.font = '12px sans-serif';
+        this.ctx.textAlign = 'left';
+
+        for (const [targetId, data] of this.targetData) {
+            if (!data.visible) continue;
+
+            // Draw color line
+            this.ctx.strokeStyle = this.getComputedColor(data.color);
+            this.ctx.lineWidth = 2;
+            this.ctx.beginPath();
+            this.ctx.moveTo(legendX, legendY);
+            this.ctx.lineTo(legendX + 20, legendY);
+            this.ctx.stroke();
+
+            // Draw target name
+            this.ctx.fillStyle = this.getComputedColor(this.plotConfig.textColor);
+            this.ctx.fillText(data.name, legendX + 25, legendY + 4);
+
+            legendY += lineHeight;
+        }
+    }
+
+    getComputedColor(cssVar) {
+        // Handle CSS variables by getting computed style
+        if (cssVar.startsWith('var(')) {
+            const varName = cssVar.slice(4, -1);
+            return getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
+        }
+        return cssVar;
+    }
+
+    handleResize() {
+        if (this.isInitialized) {
+            this.setupCanvas();
+            this.redraw();
+        }
+    }
+
+    setMinAltitude(minAlt) {
+        this.minAltitude = minAlt;
+        this.redraw();
+    }
+
+    destroy() {
+        this.targetData.clear();
+        this.selectedTargets.clear();
+        this.isInitialized = false;
+    }
+}

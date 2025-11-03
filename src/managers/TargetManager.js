@@ -30,6 +30,13 @@ export class TargetManager {
             this.updateTargetTable();
             // After populating table, compute current alt/az and rise/set for each target
             this.updateTargetsObservingInfo();
+            // Update plot with loaded targets
+            const app = window.minairApp;
+            if (app && app.updatePlot) {
+                setTimeout(() => {
+                    app.updatePlot();
+                }, 200);
+            }
         } catch (error) {
             console.error('Failed to load default targets:', error);
         }
@@ -52,9 +59,9 @@ export class TargetManager {
         this.updateTargetTable();
         // Update plot after removing target
         const app = window.minairApp;
-        if (app && app.plotManager) {
+        if (app && app.updatePlot) {
             setTimeout(() => {
-                app.plotManager.updatePlot();
+                app.updatePlot();
             }, 100);
         }
     }
@@ -71,6 +78,7 @@ export class TargetManager {
 
     createTargetRow(target) {
         const row = document.createElement('tr');
+        row.setAttribute('data-target-id', target.id);
         row.innerHTML = `
             <td class="cell-name">${target.name}</td>
             <td class="cell-ra">${formatRA(target.ra)}</td>
@@ -82,9 +90,22 @@ export class TargetManager {
             <td class="cell-rise">--:--</td>
             <td class="cell-set">--:--</td>
             <td class="form-row">
-                <button onclick="minairApp.targetManager.removeTarget(${target.id})">Remove</button>
+                <button class="btn btn-secondary btn-compact" onclick="minairApp.targetManager.removeTarget(${target.id})">Remove</button>
             </td>
         `;
+
+        // Add click handler for plot interaction
+        row.addEventListener('click', (e) => {
+            // Don't trigger on button clicks
+            if (e.target.tagName === 'BUTTON') return;
+
+            const app = window.minairApp;
+            if (app && app.plotManager) {
+                app.plotManager.toggleTarget(target.id);
+                row.classList.toggle('target-selected');
+            }
+        });
+
         return row;
     }
 
