@@ -96,8 +96,12 @@ export class TargetManager {
         this.targets = this.targets.filter(t => t.id !== id);
         this.updateTargetTable();
         this.saveTargetsToStorage(); // Persist to localStorage
-        // Update plot after removing target
+        // Toggle off the target visibility in the plot
         const app = window.minairApp;
+        if (app && app.plotManager) {
+            app.plotManager.toggleTarget(id, 'remove');
+        }
+        // Update plot after removing target
         if (app && app.updatePlot) {
             setTimeout(() => {
                 app.updatePlot();

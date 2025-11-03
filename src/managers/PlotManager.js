@@ -156,11 +156,17 @@ export class PlotManager {
         this.redraw();
     }
 
-    toggleTarget(targetId) {
+    toggleTarget(targetId, forceAction = null) {
+        // forceAction: null (toggle), 'add' (always add), 'remove' (always remove)
+        // Default toggle behavior
         if (this.selectedTargets.has(targetId)) {
-            this.selectedTargets.delete(targetId);
+            if (forceAction !== 'add') {
+                this.selectedTargets.delete(targetId);
+            }
         } else {
-            this.selectedTargets.add(targetId);
+            if (forceAction !== 'remove') {
+                this.selectedTargets.add(targetId);
+            }
         }
 
         // Update visibility in target data
