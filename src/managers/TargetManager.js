@@ -76,6 +76,29 @@ export class TargetManager {
         });
     }
 
+    async updateTableHeaderTimeLabels() {
+        // Update header row labels for Rise/Set Time
+        console.log('Updating target table headers with current clock label');
+        const thead = document.querySelector('#target-table thead tr');
+        if (thead) {
+            const timeManager = window.minairApp?.timeManager;
+            const clockLabel = timeManager && typeof timeManager.getClockLabel === 'function'
+                ? ' (' + timeManager.getClockLabel() + ')'
+                : '';
+            console.log('Clock label for headers:', clockLabel);
+            // Find header cells for Rise Time and Set Time
+            const ths = thead.querySelectorAll('th');
+            ths.forEach(th => {
+                if (th.textContent.startsWith('Rise Time')) {
+                    th.textContent = `Rise Time${clockLabel}`;
+                }
+                if (th.textContent.startsWith('Set Time')) {
+                    th.textContent = `Set Time${clockLabel}`;
+                }
+            });
+        }
+    }
+
     createTargetRow(target) {
         const row = document.createElement('tr');
         row.setAttribute('data-target-id', target.id);
@@ -148,6 +171,8 @@ export class TargetManager {
 
     // Method to update rise/set times (less frequent updates)
     async updateRiseSetTimes() {
+        await this.updateTableHeaderTimeLabels();
+
         const tbody = document.getElementById('target-table-body');
         const rows = Array.from(tbody.querySelectorAll('tr'));
         const astro = window.MinairAstronomy;
