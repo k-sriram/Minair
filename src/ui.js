@@ -156,6 +156,9 @@
             // Initialize custom dropdowns
             this.initializeCustomDropdowns();
 
+            // Initialize custom number inputs
+            this.initializeCustomNumberInputs();
+
             // Initialize location UI
             this.updateLocationUI();
 
@@ -206,6 +209,16 @@
                     new modules.CustomDropdown(select);
                 }
             });
+        }
+
+        initializeCustomNumberInputs() {
+            // Initialize custom number input functionality using the component
+            const modules = getManagers();
+            if (modules.CustomNumberInput) {
+                modules.CustomNumberInput.initializeAll();
+            } else {
+                console.warn('CustomNumberInput component not loaded');
+            }
         }
 
         handleLocationChange(value) {

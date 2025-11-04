@@ -287,6 +287,112 @@ input:-ms-input-placeholder {
     color: var(--text-placeholder) !important;
 }
 
+/* Custom number input styling */
+.number-input-wrapper {
+    position: relative;
+    display: inline-flex;
+    align-items: stretch;
+}
+
+.number-input-wrapper input[type="text"] {
+    padding: 0.5rem;
+    padding-right: 0;
+    border: 1px solid var(--border-color);
+    border-right: none;
+    border-radius: 4px 0 0 4px;
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    width: 60px;
+    min-width: 60px;
+    text-align: left;
+    transition: all 0.2s ease;
+}
+
+.number-input-wrapper input[type="text"]:hover {
+    background-color: var(--bg-tertiary);
+    border-color: var(--accent-color);
+}
+
+.number-input-wrapper input[type="text"]:focus {
+    outline: none;
+    background-color: var(--bg-tertiary);
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 3px var(--shadow-light);
+}
+
+/* Hover effects for the entire component */
+.number-input-wrapper:hover input[type="text"] {
+    background-color: var(--bg-tertiary);
+    border-color: var(--accent-color);
+}
+
+.number-input-wrapper:hover .number-spinner {
+    border-color: var(--accent-color);
+}
+
+.number-input-wrapper input[type="text"]:focus+.number-spinner {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 3px var(--shadow-light);
+}
+
+.number-spinner {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--border-color);
+    border-left: none;
+    border-radius: 0 4px 4px 0;
+    background: var(--bg-secondary);
+    transition: all 0.2s ease;
+}
+
+.spinner-btn {
+    width: 20px;
+    height: 50%;
+    border: none;
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    line-height: 1;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+.spinner-btn:first-child {
+    border-radius: 0 3px 0 0;
+    border-bottom: 0.5px solid var(--border-color);
+}
+
+.spinner-btn:last-child {
+    border-radius: 0 0 3px 0;
+    border-top: 0.5px solid var(--border-color);
+}
+
+.spinner-btn:hover {
+    background: var(--accent-color);
+    color: var(--bg-primary);
+}
+
+.spinner-btn:active {
+    background: var(--accent-hover);
+}
+
+/* Hide native number input spinners */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+input[type="number"] {
+    appearance: textfield;
+    -moz-appearance: textfield;
+}
+
 /* Custom Dropdown Styling */
 .custom-dropdown {
     position: relative;
