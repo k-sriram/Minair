@@ -12,11 +12,11 @@
 ### Phase 1: Core User Experience (High Priority)
 
 #### 1.1 Location & Time Management
-- [ ] User location input (lat/lon coordinates)
+- [x] User location input (lat/lon coordinates)
 - [ ] City/location lookup with geocoding
-- [ ] Time zone detection and handling
-- [ ] Date/time picker for observation planning
-- [ ] Save user preferences in localStorage
+- [x] Time zone detection and handling
+- [x] Date/time picker for observation planning
+- [x] Save user preferences in localStorage
 
 #### 1.2 Enhanced Visualization
 - [ ] Replace basic plotting with proper timeline/Gantt chart
@@ -27,10 +27,10 @@
 - [ ] Solar position indicators
 
 #### 1.3 UI/UX Design & Theming
-- [ ] Modern, clean interface design
-- [ ] Dark theme optimized for astronomy use (preserves night vision)
-- [ ] Red-on-black night vision theme (red light preserves scotopic vision better)
-- [ ] Light theme for daytime planning
+- [x] Modern, clean interface design
+- [x] Dark theme optimized for astronomy use (preserves night vision)
+- [x] Red-on-black night vision theme (red light preserves scotopic vision better)
+- [x] Light theme for daytime planning
 - [ ] Responsive layout for mobile/tablet/desktop
 - [ ] Intuitive navigation and information hierarchy
 - [ ] Astronomy-themed color palette (deep blues, star whites, nebula purples)
@@ -41,8 +41,8 @@
 
 #### 1.4 Improved Target Management
 - [ ] Expand target catalog (Messier objects, bright stars, planets)
-- [ ] Custom target input (RA/Dec entry)
-- [ ] Target search and filtering
+- [x] Custom target input (RA/Dec entry)
+- [x] Target search and filtering
 - [ ] Target categories and tagging
 - [ ] Import/export target lists
 
@@ -56,7 +56,7 @@
 - [ ] Moon illumination and phase calculations
 
 #### 2.2 Observation Constraints
-- [ ] Minimum altitude thresholds
+- [x] Minimum altitude thresholds
 - [ ] Maximum airmass limits
 - [ ] Moon avoidance for deep sky objects
 - [ ] Light pollution considerations
