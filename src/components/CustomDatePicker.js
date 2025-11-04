@@ -238,12 +238,8 @@ export class CustomDatePicker {
     getFormattedDate() {
         if (!this.value) return 'Select Date';
 
-        const date = new Date(this.value);
-        return date.toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric'
-        });
+        // Return the date in YYYY-MM-DD format
+        return this.value;
     }
 
     isToday(date) {
