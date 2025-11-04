@@ -1203,6 +1203,15 @@ input[type="number"] {
         gap: 1rem;
     }
 
+    .target-table-container {
+        font-size: 0.875rem;
+    }
+
+    .target-table th,
+    .target-table td {
+        padding: 0.5rem;
+    }
+
     .time-clock {
         min-width: 200px;
     }
@@ -1235,15 +1244,6 @@ input[type="number"] {
     .form-row {
         flex-direction: column;
         align-items: stretch;
-    }
-
-    .target-table-container {
-        font-size: 0.875rem;
-    }
-
-    .target-table th,
-    .target-table td {
-        padding: 0.5rem;
     }
 
     /* Mobile plot adjustments */
