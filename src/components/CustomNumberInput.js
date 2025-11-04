@@ -20,7 +20,6 @@ export class CustomNumberInput {
     }
 
     init() {
-        console.log('Setting up CustomNumberInput for input:', this.input.id);
 
         // Bind methods to preserve 'this' context
         this.handleIncrement = this.handleIncrement.bind(this);
@@ -52,7 +51,6 @@ export class CustomNumberInput {
         if (value < this.max) {
             const newValue = value + this.step;
             this.input.value = newValue;
-            console.log('Increment clicked, new value:', newValue);
             this.dispatchChangeEvents();
         }
     }
@@ -64,7 +62,6 @@ export class CustomNumberInput {
         if (value > this.min) {
             const newValue = value - this.step;
             this.input.value = newValue;
-            console.log('Decrement clicked, new value:', newValue);
             this.dispatchChangeEvents();
         }
     }
@@ -127,16 +124,13 @@ export class CustomNumberInput {
 
     // Static method to initialize all custom number inputs on a page
     static initializeAll() {
-        console.log('Initializing all CustomNumberInput components...');
 
         // Use setTimeout to ensure DOM is fully ready
         setTimeout(() => {
             const wrappers = document.querySelectorAll('.number-input-wrapper');
-            console.log('Found', wrappers.length, 'number input wrappers');
 
             const instances = [];
             wrappers.forEach((wrapper, index) => {
-                console.log('Processing wrapper', index);
                 const instance = new CustomNumberInput(wrapper);
                 if (instance.input) { // Only add if successfully initialized
                     instances.push(instance);

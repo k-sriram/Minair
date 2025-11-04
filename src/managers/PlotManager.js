@@ -48,8 +48,6 @@ export class PlotManager {
         }
 
         this.isInitialized = true;
-
-        console.log('PlotManager initialized');
     }
 
     setupCanvas() {
@@ -107,14 +105,6 @@ export class PlotManager {
                     target.ra, target.dec, obsLat, obsLon, obsDay, 10
                 );
 
-                // Debug: Logging some of the raw data points.
-                // the altData.time and .alt are too big. Let's log at 0%, 25%, 50%, 75%, 100%
-                const len = altData.time.length;
-                console.log(`Altitude data for ${target.name}:`);
-                [0, Math.floor(len * 0.25), Math.floor(len * 0.5), Math.floor(len * 0.75), len - 1].forEach(i => {
-                    console.log(`  Time: ${altData.time[i].toISOString()}, Altitude: ${altData.alt[i].toFixed(2)}°`);
-                });
-
                 // Trim the time data if startTime and endTime are defined
                 const trimmedTimes = [];
                 const trimmedAlts = [];
@@ -126,7 +116,6 @@ export class PlotManager {
                             trimmedAlts.push(altData.alt[i]);
                         }
                     }
-                    console.log(`Trimmed data for ${target.name}: ${trimmedTimes.length} points between ${trimmedTimes[0].toISOString()} and ${trimmedTimes[trimmedTimes.length - 1].toISOString()}`);
                 } else {
                     // If no start/end time, use full data
                     trimmedTimes.push(...altData.time);
