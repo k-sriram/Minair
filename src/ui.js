@@ -177,6 +177,11 @@
             const tonightDate = window.MinairAstronomy.getLocalDayOfTonightAtNow(location.lon);
             const dateString = tonightDate.toISOString().split('T')[0];
             document.getElementById('observation-date').value = dateString;
+            // Update the TargetManager with the initial observation date
+            this.targetManager.updateRiseSetTimes();
+
+            // Initialize custom date picker after setting the date
+            this.initializeCustomDatePicker();
 
             // Initialize plot manager
             setTimeout(() => {
@@ -231,6 +236,16 @@
                 modules.CustomNumberInput.initializeAll();
             } else {
                 console.warn('CustomNumberInput component not loaded');
+            }
+        }
+
+        initializeCustomDatePicker() {
+            // Initialize custom date picker functionality using the component
+            const modules = getManagers();
+            if (modules.CustomDatePicker) {
+                modules.CustomDatePicker.initializeAll();
+            } else {
+                console.warn('CustomDatePicker component not loaded');
             }
         }
 

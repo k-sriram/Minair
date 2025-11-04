@@ -22,6 +22,7 @@
     const PlotManager = await loadModule('./managers/PlotManager.js', 'PlotManager');
     const CustomDropdown = await loadModule('./components/CustomDropdown.js', 'CustomDropdown');
     const CustomNumberInput = await loadModule('./components/CustomNumberInput.js', 'CustomNumberInput');
+    const CustomDatePicker = await loadModule('./components/CustomDatePicker.js', 'CustomDatePicker');
 
     // Load utilities
     const CoordinateParser = await loadModule('./utils/CoordinateParser.js', 'parseCoordinate');
@@ -37,6 +38,7 @@
         PlotManager,
         CustomDropdown,
         CustomNumberInput,
+        CustomDatePicker,
         CoordinateParser,
         CoordinateFormatter,
         TimeConverter
