@@ -119,10 +119,26 @@ export class TargetManager {
 
     updateTargetTable() {
         const tbody = document.getElementById('target-table-body');
+
+        // Preserve selection state before clearing table
+        const selectedTargetIds = new Set();
+        tbody.querySelectorAll('tr.target-selected').forEach(row => {
+            const targetId = row.getAttribute('data-target-id');
+            if (targetId) {
+                selectedTargetIds.add(targetId);
+            }
+        });
+
         tbody.innerHTML = '';
 
         this.targets.forEach(target => {
             const row = this.createTargetRow(target);
+
+            // Restore selection state if this target was previously selected
+            if (selectedTargetIds.has(target.id.toString())) {
+                row.classList.add('target-selected');
+            }
+
             tbody.appendChild(row);
         });
     }
