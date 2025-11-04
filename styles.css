@@ -872,6 +872,26 @@ input[type="number"] {
     scrollbar-color: var(--border-color) var(--bg-secondary);
 }
 
+/* Copyright Footer */
+.copyright-footer {
+    background-color: var(--bg-secondary);
+    border-top: 1px solid var(--border-color);
+    padding: 1rem;
+    margin-top: 2rem;
+}
+
+.copyright-content {
+    max-width: 1400px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.copyright-content p {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+}
+
 /* Responsive Design */
 @media (max-width: 1200px) {
     .header-content {
