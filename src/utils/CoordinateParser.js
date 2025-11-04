@@ -77,8 +77,8 @@ export function parseCoordinate(coordStr, default_unit) {
                     // Result should be in hours for hour angles
                     return result;
                 } else { // deg
-                    // If this looks like it was specified in hours (h suffix or value <= 24), convert to degrees
-                    if (cleaned.includes('h') || (result <= 24 && !cleaned.includes('d'))) {
+                    // If this looks like it was specified in hours (h suffix), convert to degrees
+                    if (cleaned.includes('h')) {
                         result = result * 15;
                     }
                     // Result should be in degrees
