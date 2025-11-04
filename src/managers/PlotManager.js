@@ -408,8 +408,10 @@ export class PlotManager {
         // Position legend within the right padding area
         const legendX = plotArea.right + 10;
         let legendY = plotArea.top + 20;
-        const lineHeight = 20;
+        const lineHeight = 18;
         const availableWidth = width - legendX - 10; // Available space for legend text
+        const textStartX = legendX + 20; // X position for text (after color line)
+        const maxTextWidth = availableWidth - 25; // Space minus color line and margins
 
         this.ctx.font = '12px sans-serif';
         this.ctx.textAlign = 'left';
@@ -421,33 +423,62 @@ export class PlotManager {
             this.ctx.strokeStyle = this.getComputedColor(data.color);
             this.ctx.lineWidth = 2;
             this.ctx.beginPath();
-            this.ctx.moveTo(legendX, legendY);
-            this.ctx.lineTo(legendX + 15, legendY);
+            this.ctx.moveTo(legendX, legendY + 2);
+            this.ctx.lineTo(legendX + 15, legendY + 2);
             this.ctx.stroke();
 
-            // Draw target name with smart truncation
+            // Draw target name with text wrapping
             this.ctx.fillStyle = this.getComputedColor(this.plotConfig.textColor);
 
-            let targetName = data.name;
-            const maxTextWidth = availableWidth - 20; // Space minus color line and margins
+            const targetName = data.name;
+            const words = targetName.split(' ');
+            const wrappedLines = this.wrapText(words, maxTextWidth);
 
-            // Measure and truncate if necessary
-            if (this.ctx.measureText(targetName).width > maxTextWidth) {
-                while (targetName.length > 3 && this.ctx.measureText(targetName + '...').width > maxTextWidth) {
-                    targetName = targetName.slice(0, -1);
-                }
-                if (targetName.length > 3) {
-                    targetName += '...';
+            // Draw each line of wrapped text
+            let currentY = legendY + 4;
+            for (let i = 0; i < wrappedLines.length; i++) {
+                this.ctx.fillText(wrappedLines[i], textStartX, currentY);
+                if (i < wrappedLines.length - 1) { // Not the last line
+                    currentY += lineHeight;
                 }
             }
 
-            this.ctx.fillText(targetName, legendX + 20, legendY + 4);
-
-            legendY += lineHeight;
+            // Move to next legend entry, accounting for wrapped lines
+            legendY += lineHeight * Math.max(1, wrappedLines.length) + 2;
         }
     }
 
-    getComputedColor(cssVar) {
+    // Helper method to wrap text within a given width
+    wrapText(words, maxWidth) {
+        if (words.length === 0) return [''];
+
+        const lines = [];
+        let currentLine = words[0];
+
+        for (let i = 1; i < words.length; i++) {
+            const testLine = currentLine + ' ' + words[i];
+            const testWidth = this.ctx.measureText(testLine).width;
+
+            if (testWidth <= maxWidth) {
+                currentLine = testLine;
+            } else {
+                // Current line is full, start a new line
+                lines.push(currentLine);
+                currentLine = words[i];
+            }
+        }
+
+        // Add the last line
+        lines.push(currentLine);
+
+        // Limit to maximum 2 lines to prevent legend from becoming too tall
+        if (lines.length > 2) {
+            lines[1] = lines[1] + '...';
+            return lines.slice(0, 2);
+        }
+
+        return lines;
+    } getComputedColor(cssVar) {
         // Handle CSS variables by getting computed style
         if (cssVar.startsWith('var(')) {
             const varName = cssVar.slice(4, -1);
