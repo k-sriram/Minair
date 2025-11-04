@@ -49,18 +49,22 @@ export class CustomDatePicker {
     }
 
     createCalendar(calendar) {
-        // Parse date string correctly to avoid timezone issues
-        let currentDate;
-        if (this.value) {
+        // Use displayed month if navigating, otherwise use selected date or today
+        let displayDate;
+        if (this.displayedMonth) {
+            displayDate = new Date(this.displayedMonth);
+        } else if (this.value) {
             // Parse YYYY-MM-DD format as local date, not UTC
             const parts = this.value.split('-');
-            currentDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+            displayDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
         } else {
-            currentDate = new Date();
+            displayDate = new Date();
         }
-        const year = currentDate.getFullYear();
-        const month = currentDate.getMonth();
 
+        this.createCalendarForMonth(calendar, displayDate.getFullYear(), displayDate.getMonth());
+    }
+
+    createCalendarForMonth(calendar, year, month) {
         calendar.innerHTML = '';
 
         // Calendar header with navigation
@@ -155,6 +159,8 @@ export class CustomDatePicker {
                 const dateStr = e.target.getAttribute('data-date');
                 this.selectDate(dateStr);
             } else if (e.target.classList.contains('calendar-nav-btn')) {
+                e.preventDefault();
+                e.stopPropagation();
                 const action = e.target.getAttribute('data-action');
                 this.navigateMonth(action);
             }
@@ -208,22 +214,28 @@ export class CustomDatePicker {
     }
 
     navigateMonth(action) {
-        // Parse date string correctly to avoid timezone issues
-        let currentDate;
-        if (this.value) {
+        // Get the current displayed month (or use selected date/today as fallback)
+        let displayDate;
+        if (this.displayedMonth) {
+            displayDate = new Date(this.displayedMonth);
+        } else if (this.value) {
             const parts = this.value.split('-');
-            currentDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+            displayDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
         } else {
-            currentDate = new Date();
+            displayDate = new Date();
         }
 
         if (action === 'prev-month') {
-            currentDate.setMonth(currentDate.getMonth() - 1);
+            displayDate.setMonth(displayDate.getMonth() - 1);
         } else if (action === 'next-month') {
-            currentDate.setMonth(currentDate.getMonth() + 1);
+            displayDate.setMonth(displayDate.getMonth() + 1);
         }
 
-        this.createCalendar(this.calendar);
+        // Store the displayed month for navigation
+        this.displayedMonth = new Date(displayDate.getFullYear(), displayDate.getMonth(), 1);
+
+        // Recreate calendar with the new month
+        this.createCalendarForMonth(this.calendar, displayDate.getFullYear(), displayDate.getMonth());
     }
 
     updateCalendarSelection() {
