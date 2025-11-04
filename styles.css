@@ -1224,4 +1224,39 @@ input[type="number"] {
     .target-table td {
         padding: 0.5rem;
     }
+
+    /* Mobile plot adjustments */
+    .plot-container {
+        padding: 0.5rem;
+    }
+
+    #altitude-plot-canvas {
+        height: 300px;
+        /* Smaller height on mobile */
+    }
+}
+
+/* Additional mobile-specific plot styling */
+@media (max-width: 480px) {
+    .plot-section {
+        padding: 0.5rem;
+    }
+
+    .plot-header h2 {
+        font-size: 1.25rem;
+    }
+
+    .plot-controls {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .plot-controls .btn {
+        width: 100%;
+    }
+
+    #altitude-plot-canvas {
+        height: 250px;
+        /* Even smaller on very small screens */
+    }
 }

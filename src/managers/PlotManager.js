@@ -27,6 +27,9 @@ export class PlotManager {
         this.timeReference = 'utc'; // Default time reference
         this.xticks = [];
         this.xnow = null;
+        this.isMobile = false;
+        this.isTablet = false;
+        this.updateDeviceType();
     }
 
     initialize() {
@@ -39,6 +42,8 @@ export class PlotManager {
         }
 
         this.ctx = this.canvas.getContext('2d');
+        this.updateDeviceType();
+        this.updatePlotConfigForDevice();
         this.setupCanvas();
 
         // Read initial minAltitude value from DOM
@@ -48,6 +53,40 @@ export class PlotManager {
         }
 
         this.isInitialized = true;
+    }
+
+    updateDeviceType() {
+        // Check for mobile/tablet using multiple methods
+        this.isMobile = window.matchMedia('(max-width: 768px)').matches;
+        this.isTablet = window.matchMedia('(max-width: 1024px)').matches && !this.isMobile;
+
+        // Also check for touch devices
+        const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+
+        // Override if it's clearly a mobile device based on screen size
+        if (window.innerWidth <= 480) {
+            this.isMobile = true;
+            this.isTablet = false;
+        } else if (window.innerWidth <= 768) {
+            this.isMobile = true;
+            this.isTablet = false;
+        } else if (window.innerWidth <= 1024 && isTouchDevice) {
+            this.isTablet = true;
+            this.isMobile = false;
+        }
+    }
+
+    updatePlotConfigForDevice() {
+        if (this.isMobile) {
+            // Mobile: legend below plot, smaller padding
+            this.plotConfig.padding = { top: 30, right: 20, bottom: 120, left: 60 };
+        } else if (this.isTablet) {
+            // Tablet: smaller right padding for legend
+            this.plotConfig.padding = { top: 35, right: 150, bottom: 60, left: 70 };
+        } else {
+            // Desktop: original padding
+            this.plotConfig.padding = { top: 40, right: 200, bottom: 60, left: 80 };
+        }
     }
 
     setupCanvas() {
@@ -394,15 +433,33 @@ export class PlotManager {
     drawLegend(plotArea, width, height) {
         if (this.targetData.size === 0) return;
 
-        // Position legend within the right padding area
-        const legendX = plotArea.right + 10;
-        let legendY = plotArea.top + 20;
-        const lineHeight = 18;
-        const availableWidth = width - legendX - 10; // Available space for legend text
-        const textStartX = legendX + 20; // X position for text (after color line)
-        const maxTextWidth = availableWidth - 25; // Space minus color line and margins
+        let legendX, legendY, legendDirection;
+        const lineHeight = this.isMobile ? 16 : 18;
+        const fontSize = this.isMobile ? '11px' : '12px';
 
-        this.ctx.font = '12px sans-serif';
+        if (this.isMobile) {
+            // Mobile: legend below plot in horizontal layout
+            legendDirection = 'horizontal';
+            legendX = plotArea.left + 10;
+            legendY = plotArea.bottom + 30;
+
+            this.drawHorizontalLegend(plotArea, width, height, legendX, legendY, fontSize);
+        } else {
+            // Desktop/Tablet: legend on the right side
+            legendDirection = 'vertical';
+            legendX = plotArea.right + 10;
+            legendY = plotArea.top + 20;
+
+            this.drawVerticalLegend(plotArea, width, height, legendX, legendY, fontSize, lineHeight);
+        }
+    }
+
+    drawVerticalLegend(plotArea, width, height, legendX, legendY, fontSize, lineHeight) {
+        const availableWidth = width - legendX - 10;
+        const textStartX = legendX + 20;
+        const maxTextWidth = availableWidth - 25;
+
+        this.ctx.font = `${fontSize} sans-serif`;
         this.ctx.textAlign = 'left';
 
         for (const [targetId, data] of this.targetData) {
@@ -427,13 +484,54 @@ export class PlotManager {
             let currentY = legendY + 4;
             for (let i = 0; i < wrappedLines.length; i++) {
                 this.ctx.fillText(wrappedLines[i], textStartX, currentY);
-                if (i < wrappedLines.length - 1) { // Not the last line
+                if (i < wrappedLines.length - 1) {
                     currentY += lineHeight;
                 }
             }
 
-            // Move to next legend entry, accounting for wrapped lines
+            // Move to next legend entry
             legendY += lineHeight * Math.max(1, wrappedLines.length) + 2;
+        }
+    }
+
+    drawHorizontalLegend(plotArea, width, height, startX, startY, fontSize) {
+        this.ctx.font = `${fontSize} sans-serif`;
+        this.ctx.textAlign = 'left';
+
+        let currentX = startX;
+        let currentY = startY;
+        const itemSpacing = 15;
+        const rowHeight = 20;
+        const maxRowWidth = width - 40; // Leave some margin
+
+        for (const [targetId, data] of this.targetData) {
+            if (!data.visible) continue;
+
+            // Calculate text width for this item
+            const targetName = data.name;
+            const textWidth = this.ctx.measureText(targetName).width;
+            const itemWidth = 20 + textWidth + itemSpacing; // color line + text + spacing
+
+            // Check if we need to wrap to next row
+            if (currentX + itemWidth > maxRowWidth && currentX > startX) {
+                currentX = startX;
+                currentY += rowHeight;
+            }
+
+            // Draw color line
+            this.ctx.strokeStyle = this.getComputedColor(data.color);
+            this.ctx.lineWidth = 2;
+            this.ctx.beginPath();
+            this.ctx.moveTo(currentX, currentY + 2);
+            this.ctx.lineTo(currentX + 15, currentY + 2);
+            this.ctx.stroke();
+
+            // Draw target name
+            this.ctx.fillStyle = this.getComputedColor(this.plotConfig.textColor);
+            this.ctx.fillText(targetName, currentX + 20, currentY + 4);
+
+            // Move to next position
+            currentX += itemWidth;
         }
     }
 
@@ -478,6 +576,8 @@ export class PlotManager {
 
     handleResize() {
         if (this.isInitialized) {
+            this.updateDeviceType();
+            this.updatePlotConfigForDevice();
             this.setupCanvas();
             this.redraw();
         }
