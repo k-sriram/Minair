@@ -24,6 +24,9 @@
             this.targetManager = new modules.TargetManager();
             this.plotManager = new modules.PlotManager();
 
+            // Initialize TargetManager with dependencies
+            this.targetManager.initialize(this.locationManager, this.timeManager);
+
             // Store coordinate formatter for easy access
             this.coordinateFormatter = modules.CoordinateFormatter;
 

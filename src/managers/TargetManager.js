@@ -13,6 +13,16 @@ import { formatDateHHMMWithTimeZone } from '../utils/TimeConverter.js';
 export class TargetManager {
     constructor() {
         this.targets = [];
+        this.locationManager = null;
+        this.timeManager = null;
+        this.initialized = false;
+    }
+
+    // Initialize with required dependencies
+    initialize(locationManager, timeManager) {
+        this.locationManager = locationManager;
+        this.timeManager = timeManager;
+        this.initialized = true;
         this.loadDefaultTargets();
     }
 
@@ -64,10 +74,9 @@ export class TargetManager {
             // After populating table, compute current alt/az and rise/set for each target
             this.updateTargetsObservingInfo();
             // Update plot with loaded targets
-            const app = window.minairApp;
-            if (app && app.updatePlot) {
+            if (window.minairApp && window.minairApp.updatePlot) {
                 setTimeout(() => {
-                    app.updatePlot();
+                    window.minairApp.updatePlot();
                 }, 200);
             }
         } catch (error) {
@@ -97,14 +106,13 @@ export class TargetManager {
         this.updateTargetTable();
         this.saveTargetsToStorage(); // Persist to localStorage
         // Toggle off the target visibility in the plot
-        const app = window.minairApp;
-        if (app && app.plotManager) {
-            app.plotManager.toggleTarget(id, 'remove');
+        if (window.minairApp && window.minairApp.plotManager) {
+            window.minairApp.plotManager.toggleTarget(id, 'remove');
         }
         // Update plot after removing target
-        if (app && app.updatePlot) {
+        if (window.minairApp && window.minairApp.updatePlot) {
             setTimeout(() => {
-                app.updatePlot();
+                window.minairApp.updatePlot();
             }, 100);
         }
     }
@@ -121,14 +129,12 @@ export class TargetManager {
 
     async updateTableHeaderTimeLabels() {
         // Update header row labels for Rise/Set Time
-        console.log('Updating target table headers with current clock label');
         const thead = document.querySelector('#target-table thead tr');
         if (thead) {
-            const timeManager = window.minairApp?.timeManager;
+            const timeManager = this.timeManager;
             const clockLabel = timeManager && typeof timeManager.getClockLabel === 'function'
                 ? ' (' + timeManager.getClockLabel() + ')'
                 : '';
-            console.log('Clock label for headers:', clockLabel);
             // Find header cells for Rise Time and Set Time
             const ths = thead.querySelectorAll('th');
             ths.forEach(th => {
@@ -172,9 +178,8 @@ export class TargetManager {
             // Don't trigger on button clicks
             if (e.target.tagName === 'BUTTON') return;
 
-            const app = window.minairApp;
-            if (app && app.plotManager) {
-                app.plotManager.toggleTarget(target.id);
+            if (window.minairApp && window.minairApp.plotManager) {
+                window.minairApp.plotManager.toggleTarget(target.id);
                 row.classList.toggle('target-selected');
             }
         });
@@ -187,7 +192,7 @@ export class TargetManager {
         const tbody = document.getElementById('target-table-body');
         const rows = Array.from(tbody.querySelectorAll('tr'));
         const astro = window.MinairAstronomy;
-        const obsParams = window.minairApp.getObservationParameters();
+        const obsParams = this.getObservationParameters();
 
         // Convert current UTC time to local solar time for accurate calculations
         const utcNow = new Date();
@@ -226,7 +231,7 @@ export class TargetManager {
         const tbody = document.getElementById('target-table-body');
         const rows = Array.from(tbody.querySelectorAll('tr'));
         const astro = window.MinairAstronomy;
-        const obsParams = window.minairApp.getObservationParameters();
+        const obsParams = this.getObservationParameters();
 
         // Get minimum altitude from UI (default to 0° if not set)
         const minAltInput = document.getElementById('min-altitude');
@@ -246,7 +251,7 @@ export class TargetManager {
                 const setDateUTC = riseSet.setTime ? riseSet.setTime : null;
 
                 // Update display  
-                const timeManager = window.minairApp?.timeManager;
+                const timeManager = this.timeManager;
                 row.querySelector('.cell-rise').textContent = riseDateUTC ? formatDateHHMMWithTimeZone(riseDateUTC, timeManager) : '--:--';
                 row.querySelector('.cell-set').textContent = setDateUTC ? formatDateHHMMWithTimeZone(setDateUTC, timeManager) : '--:--';
             } catch (e) {
@@ -260,6 +265,29 @@ export class TargetManager {
         // Update both alt/az and rise/set times
         await this.updateCurrentAltAz();
         await this.updateRiseSetTimes();
+    }
+
+    // Helper to get current observation parameters
+    getObservationParameters() {
+        if (!this.locationManager) {
+            // Fallback to default location if not initialized
+            return {
+                obsLat: 51.4779,
+                obsLon: -0.0015,
+                obsDay: new Date()
+            };
+        }
+
+        const location = this.locationManager.getLocation();
+        const obsDateInput = document.getElementById('observation-date');
+        const obsDateStr = obsDateInput ? obsDateInput.value : new Date().toISOString().split('T')[0];
+        const obsDate = new Date(obsDateStr);
+
+        return {
+            obsLat: location.lat,
+            obsLon: location.lon,
+            obsDay: obsDate
+        };
     }
 
     // Lookup coordinates for an object name using external catalog services.
