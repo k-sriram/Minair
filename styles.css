@@ -111,12 +111,12 @@
     --bg-primary: #000000;
     --bg-secondary: #1a0000;
     --bg-tertiary: #330000;
-    --text-primary: #ff4444;
-    --text-secondary: #cc3333;
-    --text-placeholder: #882222;
+    --text-primary: #ff2200;
+    --text-secondary: #cc1900;
+    --text-placeholder: #881100;
     --border-color: #660000;
-    --accent-color: #cc4444;
-    --accent-hover: #bb3333;
+    --accent-color: #cc2200;
+    --accent-hover: #bb1900;
     --clock-active-bg: #660000;
     --clock-active-hover: #800000;
     --header-bg: #1a0000;
@@ -125,16 +125,16 @@
     --table-header-bg: #330000;
     --table-row-hover: #330000;
     --error-bg: #330000;
-    --error-text: #ff8888;
+    --error-text: #ff4400;
     --error-border: #660000;
     --success-bg: #330000;
-    --success-text: #ff8888;
+    --success-text: #ff4400;
     --success-border: #660000;
     --info-bg: #330000;
-    --info-text: #ff8888;
+    --info-text: #ff4400;
     --info-border: #660000;
-    --shadow-light: rgba(255, 68, 68, 0.2);
-    --shadow-medium: rgba(255, 68, 68, 0.3);
+    --shadow-light: rgba(255, 34, 34, 0.2);
+    --shadow-medium: rgba(255, 34, 34, 0.3);
 
     /* Target Line Colors for Red/Night Vision Theme */
     --target-color-1: #ff4444;
