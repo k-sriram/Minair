@@ -10,7 +10,7 @@ export class PlotManager {
         this.targetData = new Map(); // Store plot data for each target
         this.selectedTargets = new Set(); // Track which targets to plot
         this.plotConfig = {
-            padding: { top: 40, right: 120, bottom: 60, left: 80 },
+            padding: { top: 40, right: 200, bottom: 60, left: 80 },
             gridColor: 'var(--border-color)',
             textColor: 'var(--text-secondary)',
             backgroundColor: 'var(--bg-secondary)',
@@ -405,9 +405,11 @@ export class PlotManager {
     drawLegend(plotArea, width, height) {
         if (this.targetData.size === 0) return;
 
+        // Position legend within the right padding area
         const legendX = plotArea.right + 10;
         let legendY = plotArea.top + 20;
         const lineHeight = 20;
+        const availableWidth = width - legendX - 10; // Available space for legend text
 
         this.ctx.font = '12px sans-serif';
         this.ctx.textAlign = 'left';
@@ -420,12 +422,26 @@ export class PlotManager {
             this.ctx.lineWidth = 2;
             this.ctx.beginPath();
             this.ctx.moveTo(legendX, legendY);
-            this.ctx.lineTo(legendX + 20, legendY);
+            this.ctx.lineTo(legendX + 15, legendY);
             this.ctx.stroke();
 
-            // Draw target name
+            // Draw target name with smart truncation
             this.ctx.fillStyle = this.getComputedColor(this.plotConfig.textColor);
-            this.ctx.fillText(data.name, legendX + 25, legendY + 4);
+
+            let targetName = data.name;
+            const maxTextWidth = availableWidth - 20; // Space minus color line and margins
+
+            // Measure and truncate if necessary
+            if (this.ctx.measureText(targetName).width > maxTextWidth) {
+                while (targetName.length > 3 && this.ctx.measureText(targetName + '...').width > maxTextWidth) {
+                    targetName = targetName.slice(0, -1);
+                }
+                if (targetName.length > 3) {
+                    targetName += '...';
+                }
+            }
+
+            this.ctx.fillText(targetName, legendX + 20, legendY + 4);
 
             legendY += lineHeight;
         }
