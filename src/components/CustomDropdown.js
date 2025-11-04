@@ -159,4 +159,30 @@ export class CustomDropdown {
                 break;
         }
     }
+
+    // Method to programmatically update the dropdown value
+    updateValue(newValue) {
+        // Update selected option styling
+        this.menu.querySelectorAll('.dropdown-option').forEach(opt => {
+            opt.classList.remove('selected');
+            if (opt.dataset.value === newValue) {
+                opt.classList.add('selected');
+            }
+        });
+
+        // Update display and internal state
+        this.value = newValue;
+        this.selectedText.textContent = this.getSelectedText();
+
+        // Update original select (but don't trigger change event to avoid loops)
+        this.originalSelect.value = newValue;
+    }
+
+    // Method to destroy the custom dropdown and restore original select
+    destroy() {
+        if (this.wrapper && this.wrapper.parentNode) {
+            this.wrapper.parentNode.removeChild(this.wrapper);
+        }
+        this.originalSelect.style.display = '';
+    }
 }

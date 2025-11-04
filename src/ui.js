@@ -31,7 +31,11 @@
             this.coordinateFormatter = modules.CoordinateFormatter;
 
             this.setupEventListeners();
-            this.initializeUI();
+            this.initialize();
+        }
+
+        async initialize() {
+            await this.initializeUI();
         }
 
         setupEventListeners() {
@@ -152,17 +156,19 @@
             });
         }
 
-        initializeUI() {
+        async initializeUI() {
             // Initialize custom dropdowns
             this.initializeCustomDropdowns();
 
             // Initialize custom number inputs
             this.initializeCustomNumberInputs();
 
-            // Initialize location UI
+            // Wait for observatories to load, then populate dropdown and initialize location UI
+            await this.locationManager.loadObservatories();
+            this.populateLocationDropdown();
             this.updateLocationUI();
 
-            // Set observation date to tonight's observing session (after location is initialized)
+            // Set observation date to tonight's observing session (after location is fully loaded)
             const location = this.locationManager.getLocation();
             const tonightDate = window.MinairAstronomy.getLocalDayOfTonightAtNow(location.lon);
             const dateString = tonightDate.toISOString().split('T')[0];
@@ -198,15 +204,18 @@
         initializeCustomDropdowns() {
             // Replace select elements with custom dropdowns
             const modules = getManagers();
+            this.customDropdowns = {};
+
             const selectElements = [
-                document.getElementById('theme-select'),
-                document.getElementById('location-select'),
-                document.getElementById('timezone-select')
+                { id: 'theme-select', key: 'theme' },
+                { id: 'location-select', key: 'location' },
+                { id: 'timezone-select', key: 'timezone' }
             ];
 
-            selectElements.forEach(select => {
+            selectElements.forEach(({ id, key }) => {
+                const select = document.getElementById(id);
                 if (select) {
-                    new modules.CustomDropdown(select);
+                    this.customDropdowns[key] = new modules.CustomDropdown(select);
                 }
             });
         }
@@ -218,6 +227,32 @@
                 modules.CustomNumberInput.initializeAll();
             } else {
                 console.warn('CustomNumberInput component not loaded');
+            }
+        }
+
+        populateLocationDropdown() {
+            const locationSelect = document.getElementById('location-select');
+
+            // Clear existing options except Custom Location
+            const customOption = locationSelect.querySelector('option[value="custom"]');
+            locationSelect.innerHTML = '';
+            locationSelect.appendChild(customOption);
+
+            // Add observatory options from loaded data
+            for (const [key, observatory] of Object.entries(this.locationManager.observatories)) {
+                const option = document.createElement('option');
+                option.value = key;
+                option.textContent = observatory.name;
+                locationSelect.appendChild(option);
+            }
+
+            // Update the custom dropdown if it exists
+            if (this.customDropdowns && this.customDropdowns.location) {
+                // Destroy the old custom dropdown first
+                this.customDropdowns.location.destroy();
+                // Recreate the custom dropdown with new options
+                const modules = getManagers();
+                this.customDropdowns.location = new modules.CustomDropdown(locationSelect);
             }
         }
 
@@ -234,10 +269,13 @@
                 latInput.disabled = false;
                 lonInput.disabled = false;
 
-                // Load current location values
+                // Load current location values and save as custom location
                 const location = this.locationManager.getLocation();
                 latInput.value = location.lat;
                 lonInput.value = location.lon;
+
+                // Update localStorage to reflect this is now a custom location (no observatory ID)
+                this.locationManager.setLocation(location.lat, location.lon, 'Custom Location', null);
             } else {
                 // Disable inputs but show preset coordinates
                 latInput.disabled = true;
@@ -260,7 +298,7 @@
             const lon = parseFloat(document.getElementById('longitude').value);
 
             if (!isNaN(lat) && !isNaN(lon)) {
-                this.locationManager.setLocation(lat, lon, 'Custom Location');
+                this.locationManager.setLocation(lat, lon, 'Custom Location', null);
 
                 // Location changed - update rise/set times and plot
                 this.targetManager.updateRiseSetTimes();
@@ -282,17 +320,13 @@
             latInput.disabled = false;
             lonInput.disabled = false;
 
-            // Check if current location matches any observatory
-            let matchedObservatory = null;
-            for (const [key, obs] of Object.entries(this.locationManager.observatories)) {
-                if (Math.abs(obs.lat - location.lat) < 0.001 && Math.abs(obs.lon - location.lon) < 0.001) {
-                    matchedObservatory = key;
-                    break;
+            // Check if current location has an observatory ID
+            if (location.id && this.locationManager.observatories[location.id]) {
+                locationSelect.value = location.id;
+                // Update custom dropdown display
+                if (this.customDropdowns && this.customDropdowns.location) {
+                    this.customDropdowns.location.updateValue(location.id);
                 }
-            }
-
-            if (matchedObservatory) {
-                locationSelect.value = matchedObservatory;
                 // Disable inputs and show preset coordinates
                 latInput.disabled = true;
                 lonInput.disabled = true;
@@ -300,6 +334,10 @@
                 lonInput.value = location.lon.toFixed(4);
             } else {
                 locationSelect.value = 'custom';
+                // Update custom dropdown display
+                if (this.customDropdowns && this.customDropdowns.location) {
+                    this.customDropdowns.location.updateValue('custom');
+                }
                 // Keep inputs enabled for custom editing
                 latInput.value = location.lat;
                 lonInput.value = location.lon;

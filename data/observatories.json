@@ -1,0 +1,26 @@
+{
+    "greenwich": {
+        "id": "greenwich",
+        "name": "Greenwich, UK",
+        "lat": 51.4779,
+        "lon": -0.0015
+    },
+    "mauna-kea": {
+        "id": "mauna-kea",
+        "name": "Mauna Kea, Hawaii",
+        "lat": 19.8283,
+        "lon": -155.4783
+    },
+    "atacama": {
+        "id": "atacama",
+        "name": "Atacama Desert, Chile",
+        "lat": -24.6272,
+        "lon": -70.4042
+    },
+    "palomar": {
+        "id": "palomar",
+        "name": "Palomar Observatory, CA",
+        "lat": 33.3563,
+        "lon": -116.8650
+    }
+}
