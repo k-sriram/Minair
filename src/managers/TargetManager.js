@@ -161,7 +161,7 @@ export class TargetManager {
             <td class="cell-airmass">--.--</td>
             <td class="cell-rise">--:--</td>
             <td class="cell-set">--:--</td>
-            <td class="form-row">
+            <td class="cell-actions">
                 <button class="btn btn-secondary btn-compact" data-target-id="${target.id}">Remove</button>
             </td>
         `;

@@ -539,6 +539,12 @@ input:-ms-input-placeholder {
     background: var(--accent-hover);
 }
 
+.target-table .cell-actions {
+    text-align: center;
+    vertical-align: middle;
+    width: auto;
+}
+
 /* Add Target Form */
 .add-target-form {
     max-width: 1400px;
