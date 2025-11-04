@@ -515,6 +515,13 @@ input[type="number"] {
     min-width: 100px;
 }
 
+.custom-location input:disabled {
+    background-color: var(--bg-tertiary);
+    color: var(--text-secondary);
+    cursor: not-allowed;
+    opacity: 0.8;
+}
+
 /* Time Display Section */
 .time-display {
     background-color: var(--bg-secondary);

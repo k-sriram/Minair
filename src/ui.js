@@ -223,15 +223,31 @@
 
         handleLocationChange(value) {
             const customLocation = document.getElementById('custom-location');
+            const latInput = document.getElementById('latitude');
+            const lonInput = document.getElementById('longitude');
+
+            // Always show the custom location section
+            customLocation.style.display = 'flex';
 
             if (value === 'custom') {
-                customLocation.style.display = 'flex';
+                // Enable inputs for custom editing
+                latInput.disabled = false;
+                lonInput.disabled = false;
+
+                // Load current location values
                 const location = this.locationManager.getLocation();
-                document.getElementById('latitude').value = location.lat;
-                document.getElementById('longitude').value = location.lon;
+                latInput.value = location.lat;
+                lonInput.value = location.lon;
             } else {
-                customLocation.style.display = 'none';
+                // Disable inputs but show preset coordinates
+                latInput.disabled = true;
+                lonInput.disabled = true;
+
+                // Set observatory and get its coordinates
                 this.locationManager.setObservatory(value);
+                const location = this.locationManager.getLocation();
+                latInput.value = location.lat.toFixed(4);
+                lonInput.value = location.lon.toFixed(4);
 
                 // Location changed - update rise/set times and plot
                 this.targetManager.updateRiseSetTimes();
@@ -255,6 +271,16 @@
         updateLocationUI() {
             const location = this.locationManager.getLocation();
             const locationSelect = document.getElementById('location-select');
+            const customLocation = document.getElementById('custom-location');
+            const latInput = document.getElementById('latitude');
+            const lonInput = document.getElementById('longitude');
+
+            // Always show the custom location section
+            customLocation.style.display = 'flex';
+
+            // Initialize inputs to enabled state first
+            latInput.disabled = false;
+            lonInput.disabled = false;
 
             // Check if current location matches any observatory
             let matchedObservatory = null;
@@ -267,12 +293,16 @@
 
             if (matchedObservatory) {
                 locationSelect.value = matchedObservatory;
-                document.getElementById('custom-location').style.display = 'none';
+                // Disable inputs and show preset coordinates
+                latInput.disabled = true;
+                lonInput.disabled = true;
+                latInput.value = location.lat.toFixed(4);
+                lonInput.value = location.lon.toFixed(4);
             } else {
                 locationSelect.value = 'custom';
-                document.getElementById('custom-location').style.display = 'flex';
-                document.getElementById('latitude').value = location.lat;
-                document.getElementById('longitude').value = location.lon;
+                // Keep inputs enabled for custom editing
+                latInput.value = location.lat;
+                lonInput.value = location.lon;
             }
         }
 
