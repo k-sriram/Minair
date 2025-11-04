@@ -550,8 +550,6 @@ input[type="number"] {
 
 .time-clock:hover {
     background-color: var(--clock-hover);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px var(--shadow-medium);
 }
 
 .time-clock.active {
