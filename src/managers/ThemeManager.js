@@ -8,7 +8,7 @@ export class ThemeManager {
 
     loadTheme() {
         const saved = localStorage.getItem('minair-theme');
-        return saved || 'light';
+        return saved || 'red';
     }
 
     saveTheme(theme) {
