@@ -13,16 +13,16 @@
 
 #### 1.1 Location & Time Management
 - [x] User location input (lat/lon coordinates)
-- [ ] City/location lookup with geocoding
+- [x] City/location lookup with geocoding
 - [x] Time zone detection and handling
 - [x] Date/time picker for observation planning
 - [x] Save user preferences in localStorage
 
 #### 1.2 Enhanced Visualization
-- [ ] Replace basic plotting with proper timeline/Gantt chart
+- [ ] ~~Replace basic plotting with proper timeline/Gantt chart~~
 - [ ] Interactive observation windows (hover, zoom, pan)
 - [ ] Color-coded visibility periods
-- [ ] Target elevation curves over time
+- [x] Target elevation curves over time
 - [ ] Moon phase visualization
 - [ ] Solar position indicators
 
@@ -33,17 +33,17 @@
 - [x] Light theme for daytime planning
 - [ ] Responsive layout for mobile/tablet/desktop
 - [ ] Intuitive navigation and information hierarchy
-- [ ] Astronomy-themed color palette (deep blues, star whites, nebula purples)
+- [ ] ~~Astronomy-themed color palette (deep blues, star whites, nebula purples)~~
 - [ ] Professional typography (readable at all sizes)
 - [ ] Consistent spacing and visual rhythm
 - [ ] Loading states and smooth transitions
 - [ ] Accessibility compliance (WCAG 2.1)
 
 #### 1.4 Improved Target Management
-- [ ] Expand target catalog (Messier objects, bright stars, planets)
+- [ ] ~~Expand target catalog (Messier objects, bright stars, planets)~~
 - [x] Custom target input (RA/Dec entry)
 - [x] Target search and filtering
-- [ ] Target categories and tagging
+- [ ] ~~Target categories and tagging~~
 - [ ] Import/export target lists
 
 ### Phase 2: Astronomical Accuracy (Medium Priority)
