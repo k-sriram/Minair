@@ -398,6 +398,12 @@ input[type="number"] {
     position: relative;
     display: inline-block;
     min-width: 120px;
+    width: 240px;
+}
+
+.custom-dropdown.timezone-dropdown {
+    min-width: 70px;
+    width: 75px;
 }
 
 .dropdown-toggle {
@@ -512,6 +518,7 @@ input[type="number"] {
 }
 
 .custom-location input {
+    width: 100px;
     min-width: 100px;
 }
 
