@@ -289,12 +289,12 @@
             // Always show the custom location section
             customLocation.style.display = 'flex';
 
-            if (value === 'custom') {
-                // Enable inputs for custom editing
-                latInput.disabled = false;
-                lonInput.disabled = false;
-                geolocationBtn.disabled = false;
+            // Always keep inputs and button enabled
+            latInput.disabled = false;
+            lonInput.disabled = false;
+            geolocationBtn.disabled = false;
 
+            if (value === 'custom') {
                 // Load current location values and save as custom location
                 const location = this.locationManager.getLocation();
                 latInput.value = location.lat;
@@ -303,12 +303,7 @@
                 // Update localStorage to reflect this is now a custom location (no observatory ID)
                 this.locationManager.setLocation(location.lat, location.lon, 'Custom Location', null);
             } else {
-                // Disable inputs but show preset coordinates
-                latInput.disabled = true;
-                lonInput.disabled = true;
-                geolocationBtn.disabled = true;
-
-                // Set observatory and get its coordinates
+                // Set observatory and get its coordinates, but keep inputs active
                 this.locationManager.setObservatory(value);
                 const location = this.locationManager.getLocation();
                 latInput.value = location.lat.toFixed(4);
@@ -325,7 +320,15 @@
             const lon = parseFloat(document.getElementById('longitude').value);
 
             if (!isNaN(lat) && !isNaN(lon)) {
+                // Always set as custom location when coordinates are manually changed
                 this.locationManager.setLocation(lat, lon, 'Custom Location', null);
+
+                // Update dropdown to show 'custom' selection
+                const locationSelect = document.getElementById('location-select');
+                locationSelect.value = 'custom';
+                if (this.customDropdowns && this.customDropdowns.location) {
+                    this.customDropdowns.location.updateValue('custom');
+                }
 
                 // Location changed - update rise/set times and plot
                 this.targetManager.updateRiseSetTimes();
@@ -360,8 +363,15 @@
                     latInput.value = lat.toFixed(6);
                     lonInput.value = lon.toFixed(6);
 
-                    // Update the location manager
+                    // Update the location manager as custom location
                     this.locationManager.setLocation(lat, lon, 'Current Location', null);
+
+                    // Update dropdown to show 'custom' selection
+                    const locationSelect = document.getElementById('location-select');
+                    locationSelect.value = 'custom';
+                    if (this.customDropdowns && this.customDropdowns.location) {
+                        this.customDropdowns.location.updateValue('custom');
+                    }
 
                     // Update rise/set times and plot
                     this.targetManager.updateRiseSetTimes();
@@ -417,35 +427,28 @@
             // Always show the custom location section
             customLocation.style.display = 'flex';
 
-            // Initialize inputs to enabled state first
+            // Always keep inputs and button enabled for user interaction
             latInput.disabled = false;
             lonInput.disabled = false;
+            geolocationBtn.disabled = false;
 
-            // Check if current location has an observatory ID
+            // Update coordinate display and dropdown selection
+            latInput.value = location.lat;
+            lonInput.value = location.lon;
+
+            // Set dropdown selection based on location
             if (location.id && this.locationManager.observatories[location.id]) {
                 locationSelect.value = location.id;
                 // Update custom dropdown display
                 if (this.customDropdowns && this.customDropdowns.location) {
                     this.customDropdowns.location.updateValue(location.id);
                 }
-                // Disable inputs and show preset coordinates
-                latInput.disabled = true;
-                lonInput.disabled = true;
-                latInput.value = location.lat.toFixed(4);
-                lonInput.value = location.lon.toFixed(4);
-                // Disable geolocation button for preset observatories
-                geolocationBtn.disabled = true;
             } else {
                 locationSelect.value = 'custom';
                 // Update custom dropdown display
                 if (this.customDropdowns && this.customDropdowns.location) {
                     this.customDropdowns.location.updateValue('custom');
                 }
-                // Keep inputs enabled for custom editing
-                latInput.value = location.lat;
-                lonInput.value = location.lon;
-                // Enable geolocation button for custom locations
-                geolocationBtn.disabled = false;
             }
         }
 
