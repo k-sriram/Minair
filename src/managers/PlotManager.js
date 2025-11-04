@@ -354,10 +354,24 @@ export class PlotManager {
         this.ctx.stroke();
 
         // X-axis labels (time)
-        this.ctx.textAlign = 'center';
-        for (const [tickTime, fraction] of this.xticks) {
-            const x = plotArea.left + fraction * (plotArea.right - plotArea.left);
-            this.ctx.fillText(formatDateHHMM(tickTime), x, plotArea.bottom + 20);
+        if (this.isMobile) {
+            // Rotate labels 90 degrees on mobile screens
+            this.ctx.textAlign = 'left';
+            for (const [tickTime, fraction] of this.xticks) {
+                const x = plotArea.left + fraction * (plotArea.right - plotArea.left);
+                this.ctx.save();
+                this.ctx.translate(x, plotArea.bottom + 20);
+                this.ctx.rotate(Math.PI / 2); // 90 degrees
+                this.ctx.fillText(formatDateHHMM(tickTime), 0, 0);
+                this.ctx.restore();
+            }
+        } else {
+            // Normal horizontal labels
+            this.ctx.textAlign = 'center';
+            for (const [tickTime, fraction] of this.xticks) {
+                const x = plotArea.left + fraction * (plotArea.right - plotArea.left);
+                this.ctx.fillText(formatDateHHMM(tickTime), x, plotArea.bottom + 20);
+            }
         }
 
         // Y-axis labels (altitude)
@@ -439,9 +453,10 @@ export class PlotManager {
 
         if (this.isMobile) {
             // Mobile: legend below plot in horizontal layout
+            // Push legend down further to account for rotated tick labels
             legendDirection = 'horizontal';
             legendX = plotArea.left + 10;
-            legendY = plotArea.bottom + 30;
+            legendY = plotArea.bottom + 70; // Increased from 50 to 70
 
             this.drawHorizontalLegend(plotArea, width, height, legendX, legendY, fontSize);
         } else {
