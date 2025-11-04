@@ -534,7 +534,7 @@ input[type="number"] {
 }
 
 .date-picker-toggle {
-    background-color: var(--bg-primary);
+    background-color: var(--bg-secondary);
     border: 1px solid var(--border-color);
     border-radius: 4px;
     padding: 0.5rem 2rem 0.5rem 0.75rem;
@@ -549,7 +549,6 @@ input[type="number"] {
 }
 
 .date-picker-toggle:hover {
-    background-color: var(--bg-secondary);
     border-color: var(--accent-color);
 }
 
@@ -585,7 +584,7 @@ input[type="number"] {
     top: calc(100% + 4px);
     left: 0;
     right: 0;
-    background-color: var(--bg-primary);
+    background-color: var(--bg-secondary);
     border: 1px solid var(--border-color);
     border-radius: 4px;
     box-shadow: 0 4px 12px var(--shadow-medium);
@@ -620,7 +619,6 @@ input[type="number"] {
 }
 
 .calendar-nav-btn:hover {
-    background-color: var(--bg-secondary);
     color: var(--accent-color);
 }
 
@@ -660,7 +658,6 @@ input[type="number"] {
     color: var(--text-primary);
     font-size: 0.875rem;
     line-height: 1;
-    transition: all 0.15s ease-in-out;
     min-height: 32px;
     display: flex;
     align-items: center;
@@ -668,7 +665,7 @@ input[type="number"] {
 }
 
 .calendar-day:hover {
-    background-color: var(--bg-secondary);
+    border: 1px solid var(--accent-color);
 }
 
 .calendar-day.other-month {
