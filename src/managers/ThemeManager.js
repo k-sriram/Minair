@@ -8,7 +8,16 @@ export class ThemeManager {
 
     loadTheme() {
         const saved = localStorage.getItem('minair-theme');
-        return saved || 'red';
+        if (saved) {
+            return saved;
+        }
+
+        // No saved theme - default to dark unless user specifically prefers light
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+            return 'light';
+        } else {
+            return 'dark';
+        }
     }
 
     saveTheme(theme) {
