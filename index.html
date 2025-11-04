@@ -8,6 +8,8 @@
     <link rel="icon" type="image/x-icon" href="favicon.ico">
     <link rel="icon" type="image/png" href="favicon.png">
     <link rel="stylesheet" href="styles.css">
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
 </head>
 
 <body>
@@ -30,6 +32,13 @@
                     <div class="setting-group">
                         <label for="longitude">Lon:</label>
                         <input type="text" id="longitude" placeholder="Longitude" />
+                    </div>
+                    <div class="setting-group">
+                        <label for="geolocation-btn" style="visibility: hidden;">A</label>
+                        <button id="geolocation-btn" class="btn-geolocation full-width" type="button"
+                            aria-label="Use my current location" title="Use my current location">
+                            <i data-feather="map-pin"></i>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -194,6 +203,12 @@
     <script src="src/catalog.js"></script>
     <script type="module" src="src/modules.js"></script>
     <script src="src/ui.js"></script>
+    <script>
+        // Initialize Feather icons after page load
+        document.addEventListener('DOMContentLoaded', () => {
+            feather.replace();
+        });
+    </script>
 </body>
 
 </html>

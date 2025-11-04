@@ -126,6 +126,11 @@
                 this.updateCustomLocation();
             });
 
+            // Geolocation button
+            document.getElementById('geolocation-btn').addEventListener('click', () => {
+                this.getCurrentLocation();
+            });
+
             // Observation date changes
             document.getElementById('observation-date').addEventListener('change', () => {
                 // Date changed - update rise/set times and plot
@@ -279,6 +284,7 @@
             const customLocation = document.getElementById('custom-location');
             const latInput = document.getElementById('latitude');
             const lonInput = document.getElementById('longitude');
+            const geolocationBtn = document.getElementById('geolocation-btn');
 
             // Always show the custom location section
             customLocation.style.display = 'flex';
@@ -287,6 +293,7 @@
                 // Enable inputs for custom editing
                 latInput.disabled = false;
                 lonInput.disabled = false;
+                geolocationBtn.disabled = false;
 
                 // Load current location values and save as custom location
                 const location = this.locationManager.getLocation();
@@ -299,6 +306,7 @@
                 // Disable inputs but show preset coordinates
                 latInput.disabled = true;
                 lonInput.disabled = true;
+                geolocationBtn.disabled = true;
 
                 // Set observatory and get its coordinates
                 this.locationManager.setObservatory(value);
@@ -325,12 +333,86 @@
             }
         }
 
+        getCurrentLocation() {
+            const geolocationBtn = document.getElementById('geolocation-btn');
+            const latInput = document.getElementById('latitude');
+            const lonInput = document.getElementById('longitude');
+
+            // Check if geolocation is supported
+            if (!navigator.geolocation) {
+                this.showLookupMessage('Geolocation is not supported by this browser.', 'error');
+                return;
+            }
+
+            // Disable button and show loading state
+            geolocationBtn.disabled = true;
+            geolocationBtn.classList.add('loading');
+            const originalText = geolocationBtn.innerHTML;
+            geolocationBtn.innerHTML = '<i data-feather="loader" class="loading-icon"></i>';
+
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    // Success callback
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
+
+                    // Fill in the coordinate inputs
+                    latInput.value = lat.toFixed(6);
+                    lonInput.value = lon.toFixed(6);
+
+                    // Update the location manager
+                    this.locationManager.setLocation(lat, lon, 'Current Location', null);
+
+                    // Update rise/set times and plot
+                    this.targetManager.updateRiseSetTimes();
+                    this.updatePlot();
+
+                    this.showLookupMessage(`Location detected: ${lat.toFixed(4)}, ${lon.toFixed(4)}`, 'success');
+
+                    // Restore button state
+                    geolocationBtn.disabled = false;
+                    geolocationBtn.classList.remove('loading');
+                    geolocationBtn.innerHTML = originalText;
+                },
+                (error) => {
+                    // Error callback
+                    let errorMessage = 'Failed to get your location: ';
+                    switch (error.code) {
+                        case error.PERMISSION_DENIED:
+                            errorMessage += 'Location access denied by user.';
+                            break;
+                        case error.POSITION_UNAVAILABLE:
+                            errorMessage += 'Location information is unavailable.';
+                            break;
+                        case error.TIMEOUT:
+                            errorMessage += 'Location request timed out.';
+                            break;
+                        default:
+                            errorMessage += 'An unknown error occurred.';
+                            break;
+                    }
+                    this.showLookupMessage(errorMessage, 'error');
+
+                    // Restore button state
+                    geolocationBtn.disabled = false;
+                    geolocationBtn.classList.remove('loading');
+                    geolocationBtn.innerHTML = originalText;
+                },
+                {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 300000 // 5 minutes
+                }
+            );
+        }
+
         updateLocationUI() {
             const location = this.locationManager.getLocation();
             const locationSelect = document.getElementById('location-select');
             const customLocation = document.getElementById('custom-location');
             const latInput = document.getElementById('latitude');
             const lonInput = document.getElementById('longitude');
+            const geolocationBtn = document.getElementById('geolocation-btn');
 
             // Always show the custom location section
             customLocation.style.display = 'flex';
@@ -351,6 +433,8 @@
                 lonInput.disabled = true;
                 latInput.value = location.lat.toFixed(4);
                 lonInput.value = location.lon.toFixed(4);
+                // Disable geolocation button for preset observatories
+                geolocationBtn.disabled = true;
             } else {
                 locationSelect.value = 'custom';
                 // Update custom dropdown display
@@ -360,6 +444,8 @@
                 // Keep inputs enabled for custom editing
                 latInput.value = location.lat;
                 lonInput.value = location.lon;
+                // Enable geolocation button for custom locations
+                geolocationBtn.disabled = false;
             }
         }
 
