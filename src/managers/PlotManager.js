@@ -371,7 +371,7 @@ export class PlotManager {
 
             let firstPoint = true;
             const startTime = data.times[0].getTime();
-            const timeSpan = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+            const timeSpan = this.endTime.getTime() - this.startTime.getTime();
 
             for (let i = 0; i < data.times.length; i++) {
                 const time = data.times[i];
