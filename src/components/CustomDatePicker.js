@@ -1,5 +1,7 @@
 /* CustomDatePicker.js — Custom date picker component for Minair
  */
+import { Icons } from '../utils/Icons.js';
+
 export class CustomDatePicker {
     constructor(inputElement) {
         this.originalInput = inputElement;
@@ -30,17 +32,8 @@ export class CustomDatePicker {
         const arrow = document.createElement('button');
         arrow.type = 'button';
         arrow.className = 'date-picker-arrow';
-        arrow.innerHTML = '<i data-feather="calendar"></i>'; // Calendar icon
-        arrow.setAttribute('aria-label', 'Open calendar');
-
-        // Process the Feather icon to convert it to SVG
-        setTimeout(() => {
-            if (window.feather) {
-                window.feather.replace();
-            }
-        }, 0);
-
-        toggle.appendChild(dateInput);
+        arrow.innerHTML = Icons.calendar; // Pre-calculated calendar icon
+        arrow.setAttribute('aria-label', 'Open calendar');        toggle.appendChild(dateInput);
         toggle.appendChild(arrow);
 
         const calendar = document.createElement('div');

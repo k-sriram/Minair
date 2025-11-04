@@ -170,6 +170,12 @@ body {
     transition: background-color 0.3s ease, color 0.3s ease;
 }
 
+svg {
+    width: 16px;
+    height: 16px;
+}
+
+
 /* Header Banner */
 .header-banner {
     background-color: var(--header-bg);
@@ -599,8 +605,6 @@ input[type="number"] {
 }
 
 .date-picker-arrow svg {
-    width: 16px;
-    height: 16px;
     stroke: var(--text-secondary);
     transition: stroke 0.15s ease-in-out;
 }
@@ -773,8 +777,6 @@ input[type="number"] {
 }
 
 .btn-geolocation svg {
-    width: 16px;
-    height: 16px;
     stroke-width: 2;
 }
 
@@ -969,6 +971,7 @@ input[type="number"] {
     border-radius: 4px;
     background-color: var(--bg-secondary);
     color: var(--text-primary);
+    min-width: 170px;
 }
 
 /* Base Button Styles */
@@ -1021,6 +1024,24 @@ input[type="number"] {
 .btn-compact {
     padding: 0.5rem 1rem;
     font-size: 0.875rem;
+}
+
+/* Icon-only buttons */
+.btn svg,
+.btn i {
+    width: 16px;
+    height: 16px;
+}
+
+.btn:has(svg):not(:has(* + svg)):not(:has(svg + *)),
+.btn:has(i[data-feather]):not(:has(* + i)):not(:has(i + *)) {
+    padding: 0.5rem;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 32px; /* 16px icon + 0.5rem padding top/bottom */
+    width: auto;
 }
 
 

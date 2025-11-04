@@ -28,6 +28,7 @@
     const CoordinateParser = await loadModule('./utils/CoordinateParser.js', 'parseCoordinate');
     const CoordinateFormatter = await import('./utils/CoordinateFormatter.js');
     const TimeConverter = await loadModule('./utils/TimeConverter.js', 'formatDateHHMMWithTimeZone');
+    const Icons = await import('./utils/Icons.js');
 
     // Make them available globally for the main app
     window.MinairModules = {
@@ -41,7 +42,8 @@
         CustomDatePicker,
         CoordinateParser,
         CoordinateFormatter,
-        TimeConverter
+        TimeConverter,
+        Icons
     };
 
     // Signal that modules are loaded

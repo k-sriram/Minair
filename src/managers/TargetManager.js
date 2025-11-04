@@ -9,6 +9,7 @@ import {
     formatHourAngle
 } from '../utils/CoordinateFormatter.js';
 import { formatDateHHMMWithTimeZone } from '../utils/TimeConverter.js';
+import { Icons } from '../utils/Icons.js';
 
 export class TargetManager {
     constructor() {
@@ -179,7 +180,7 @@ export class TargetManager {
             <td class="cell-rise">--:--</td>
             <td class="cell-set">--:--</td>
             <td class="cell-actions">
-                <button class="btn btn-secondary btn-compact" data-target-id="${target.id}">Remove</button>
+                <button class="btn btn-secondary btn-compact" data-target-id="${target.id}">${Icons.trash}</button>
             </td>
         `;
 
