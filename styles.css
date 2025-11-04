@@ -397,13 +397,26 @@ input[type="number"] {
 .custom-dropdown {
     position: relative;
     display: inline-block;
-    min-width: 120px;
-    width: 240px;
+    min-width: 6rem;
+}
+
+.custom-dropdown.location-dropdown {
+    width: 15rem;
+}
+
+.custom-dropdown.theme-dropdown {
+    width: 8rem;
 }
 
 .custom-dropdown.timezone-dropdown {
     min-width: 70px;
-    width: 75px;
+    width: 92px;
+}
+
+.custom-dropdown.timezone-dropdown .dropdown-toggle {
+    padding: 0.25rem;
+    padding-left: 0.5rem;
+    padding-right: 0rem;
 }
 
 .dropdown-toggle {
@@ -417,8 +430,8 @@ input[type="number"] {
     font-size: 0.875rem;
     cursor: pointer;
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    position: relative;
     transition: all 0.2s ease;
     text-align: left;
 }
@@ -435,6 +448,8 @@ input[type="number"] {
 }
 
 .dropdown-arrow {
+    position: absolute;
+    right: 0.75rem;
     width: 0;
     height: 0;
     border-left: 4px solid transparent;
@@ -518,8 +533,8 @@ input[type="number"] {
 }
 
 .custom-location input {
-    width: 100px;
-    min-width: 100px;
+    width: 6rem;
+    min-width: 6rem;
 }
 
 .custom-location input:disabled {

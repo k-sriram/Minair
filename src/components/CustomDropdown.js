@@ -17,8 +17,10 @@ export class CustomDropdown {
         // Create custom dropdown structure
         const wrapper = document.createElement('div');
         wrapper.className = 'custom-dropdown';
-        if (this.originalSelect.classList.contains('timezone-dropdown')) {
-            wrapper.classList.add('timezone-dropdown');
+
+        // Preserve any classes from the original select element
+        if (this.originalSelect.className) {
+            wrapper.classList.add(...this.originalSelect.classList);
         }
 
         const toggle = document.createElement('div');
