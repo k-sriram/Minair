@@ -5,22 +5,148 @@
         "lat": 51.4779,
         "lon": -0.0015
     },
-    "mauna-kea": {
-        "id": "mauna-kea",
-        "name": "Mauna Kea, Hawaii",
-        "lat": 19.8283,
-        "lon": -155.4783
+    "bao": {
+        "id": "bao",
+        "name": "Xinglong, China",
+        "lat": 40.0030,
+        "lon": 116.2830
     },
-    "atacama": {
-        "id": "atacama",
-        "name": "Atacama Desert, Chile",
-        "lat": -24.6272,
-        "lon": -70.4042
+    "mso": {
+        "id": "mso",
+        "name": "Mt. Stromlo, Australia",
+        "lat": -35.3397,
+        "lon": 149.0074
+    },
+    "hct": {
+        "id": "hct",
+        "name": "Hanle, India",
+        "lat": 32.7764,
+        "lon": 78.9647
+    },
+    "vbo": {
+        "id": "vbo",
+        "name": "Kavalur, India",
+        "lat": 12.5790,
+        "lon": 78.8200
+    },
+    "dot": {
+        "id": "dot",
+        "name": "Devasthal, India",
+        "lat": 29.3644,
+        "lon": 79.6900
+    },
+    "gmrt": {
+        "id": "gmrt",
+        "name": "Pune, India",
+        "lat": 19.0915,
+        "lon": 74.0505
+    },
+    "ekar": {
+        "id": "ekar",
+        "name": "Mt. Ekar, Italy",
+        "lat": 45.8486,
+        "lon": 11.5150
+    },
+    "calar-alto": {
+        "id": "calar-alto",
+        "name": "Calar Alto, Spain",
+        "lat": 37.2236,
+        "lon": -2.5463
+    },
+    "tona": {
+        "id": "tona",
+        "name": "Tonantzintla, Mexico",
+        "lat": 19.5800,
+        "lon": -97.3000
+    },
+    "arecibo": {
+        "id": "arecibo",
+        "name": "Arecibo, Puerto Rico",
+        "lat": 18.3442,
+        "lon": -66.7528
+    },
+    "ctio": {
+        "id": "ctio",
+        "name": "Cerro Tololo, Chile",
+        "lat": -30.1690,
+        "lon": -70.8065
+    },
+    "paranal": {
+        "id": "paranal",
+        "name": "Paranal, Chile",
+        "lat": -24.6252,
+        "lon": -70.4025
+    },
+    "la-silla": {
+        "id": "la-silla",
+        "name": "La Silla, Chile",
+        "lat": -29.2567,
+        "lon": -70.7334
+    },
+    "mcdonald": {
+        "id": "mcdonald",
+        "name": "Fort Davis, TX, USA",
+        "lat": 30.6714,
+        "lon": -104.0150
+    },
+    "apo": {
+        "id": "apo",
+        "name": "Apache Point, NM, USA",
+        "lat": 32.7804,
+        "lon": -105.8203
+    },
+    "mtbigelow": {
+        "id": "mtbigelow",
+        "name": "Mt. Bigelow, AZ, USA",
+        "lat": 32.4167,
+        "lon": -110.7333
+    },
+    "mmt": {
+        "id": "mmt",
+        "name": "Mt. Hopkins, AZ, USA",
+        "lat": 31.6881,
+        "lon": -110.8856
+    },
+    "mdm": {
+        "id": "mdm",
+        "name": "Mt. Hopkins, AZ, USA (MDM)",
+        "lat": 31.6892,
+        "lon": -110.8850
+    },
+    "kpno": {
+        "id": "kpno",
+        "name": "Kitt Peak, AZ, USA",
+        "lat": 31.9584,
+        "lon": -111.5967
+    },
+    "spm": {
+        "id": "spm",
+        "name": "San Pedro Martir, Mexico",
+        "lat": 31.0442,
+        "lon": -115.4683
     },
     "palomar": {
         "id": "palomar",
-        "name": "Palomar Observatory, CA",
+        "name": "Palomar, CA, USA",
         "lat": 33.3563,
         "lon": -116.8650
+    },
+    "lick": {
+        "id": "lick",
+        "name": "Mt. Hamilton, CA, USA",
+        "lat": 37.3414,
+        "lon": -121.6429
+    },
+    "dao": {
+        "id": "dao",
+        "name": "Saanich, Canada",
+        "lat": 48.5194,
+        "lon": -123.4386
+    },
+    "mauna-kea": {
+        "id": "mauna-kea",
+        "name": "Mauna Kea, Hawaii, USA",
+        "lat": 19.8283,
+        "lon": -155.4783
     }
 }
