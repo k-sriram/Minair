@@ -537,7 +537,7 @@ input[type="number"] {
     background-color: var(--bg-secondary);
     border: 1px solid var(--border-color);
     border-radius: 4px;
-    padding: 0.5rem 2rem 0.5rem 0.75rem;
+    padding: 0rem 2rem 0rem 0.5rem;
     cursor: pointer;
     position: relative;
     color: var(--text-primary);
@@ -557,27 +557,66 @@ input[type="number"] {
     box-shadow: 0 0 0 2px rgba(0, 102, 204, 0.25);
 }
 
-.selected-date-text {
+.setting-group .selected-date-input,
+.selected-date-input {
     flex: 1;
+    padding-left: 0.5rem;
+    background: transparent;
+    border: 0;
+    outline: 0;
+    box-shadow: none;
     color: var(--text-primary);
+    font-size: 0.875rem;
+    font-family: inherit;
+    padding: 0;
+    margin: 0;
+    min-width: auto;
+    width: 5rem;
+    height: 100%;
+}
+
+.selected-date-input::placeholder {
+    color: var(--text-placeholder);
 }
 
 .date-picker-arrow {
+    background-color: var(--bg-tertiary);
     position: absolute;
-    right: 0.75rem;
+    right: 0;
     top: 50%;
     transform: translateY(-50%);
-    width: 0;
-    height: 0;
-    border-left: 4px solid transparent;
-    border-right: 4px solid transparent;
-    border-top: 4px solid var(--text-secondary);
-    transition: transform 0.15s ease-in-out;
+    border: 0;
+    outline: 0;
+    cursor: pointer;
+    padding: 0.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 2px;
+    transition: all 0.15s ease-in-out;
+    height: 100%;
+    width: 2rem;
 }
 
-.date-picker-toggle.open .date-picker-arrow {
-    transform: translateY(-50%) rotate(180deg);
+.date-picker-arrow svg {
+    width: 16px;
+    height: 16px;
+    stroke: var(--text-secondary);
+    transition: stroke 0.15s ease-in-out;
 }
+
+.date-picker-arrow:hover {
+    background-color: var(--accent-hover);
+}
+
+.date-picker-arrow:hover svg {
+    stroke: var(--bg-primary);
+}
+
+.date-picker-arrow:focus {
+    outline: none;
+}
+
 
 .date-picker-calendar {
     position: absolute;

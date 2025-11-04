@@ -21,14 +21,26 @@ export class CustomDatePicker {
         const toggle = document.createElement('div');
         toggle.className = 'date-picker-toggle';
 
-        const selectedText = document.createElement('span');
-        selectedText.className = 'selected-date-text';
-        selectedText.textContent = this.getFormattedDate();
+        const dateInput = document.createElement('input');
+        dateInput.type = 'text';
+        dateInput.className = 'selected-date-input';
+        dateInput.value = this.value || '';
+        dateInput.placeholder = 'YYYY-MM-DD';
 
-        const arrow = document.createElement('div');
+        const arrow = document.createElement('button');
+        arrow.type = 'button';
         arrow.className = 'date-picker-arrow';
+        arrow.innerHTML = '<i data-feather="calendar"></i>'; // Calendar icon
+        arrow.setAttribute('aria-label', 'Open calendar');
 
-        toggle.appendChild(selectedText);
+        // Process the Feather icon to convert it to SVG
+        setTimeout(() => {
+            if (window.feather) {
+                window.feather.replace();
+            }
+        }, 0);
+
+        toggle.appendChild(dateInput);
         toggle.appendChild(arrow);
 
         const calendar = document.createElement('div');
@@ -45,7 +57,8 @@ export class CustomDatePicker {
         this.wrapper = wrapper;
         this.toggle = toggle;
         this.calendar = calendar;
-        this.selectedText = selectedText;
+        this.dateInput = dateInput;
+        this.arrow = arrow;
     }
 
     createCalendar(calendar) {
@@ -148,9 +161,22 @@ export class CustomDatePicker {
     }
 
     bindEvents() {
-        // Toggle calendar
-        this.toggle.addEventListener('click', () => {
+        // Open calendar only when clicking the arrow
+        this.arrow.addEventListener('click', (e) => {
+            e.stopPropagation();
             this.toggleCalendar();
+        });
+
+        // Handle date input validation
+        this.dateInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                this.validateAndSetDate();
+            }
+        });
+
+        this.dateInput.addEventListener('blur', () => {
+            this.validateAndSetDate();
         });
 
         // Calendar navigation and day selection
@@ -179,6 +205,55 @@ export class CustomDatePicker {
         });
     }
 
+    validateAndSetDate() {
+        const inputValue = this.dateInput.value.trim();
+
+        // Validate YYYY-MM-DD format
+        const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+
+        if (!inputValue) {
+            // Empty input is allowed
+            this.value = '';
+            this.originalInput.value = '';
+            this.originalInput.dispatchEvent(new Event('change', { bubbles: true }));
+            return;
+        }
+
+        if (!dateRegex.test(inputValue)) {
+            // Invalid format - restore previous value and show error
+            this.dateInput.value = this.value || '';
+            this.showDateError('Please enter date in YYYY-MM-DD format');
+            return;
+        }
+
+        // Validate that it's actually a valid date
+        const [year, month, day] = inputValue.split('-').map(Number);
+        const testDate = new Date(year, month - 1, day);
+
+        if (testDate.getFullYear() !== year ||
+            testDate.getMonth() !== month - 1 ||
+            testDate.getDate() !== day) {
+            // Invalid date - restore previous value and show error
+            this.dateInput.value = this.value || '';
+            this.showDateError('Please enter a valid date in YYYY-MM-DD format');
+            return;
+        }
+
+        // Valid date - update everything
+        this.value = inputValue;
+        this.originalInput.value = inputValue;
+        this.originalInput.dispatchEvent(new Event('change', { bubbles: true }));
+        this.updateCalendarSelection();
+
+        // Reset displayed month to selected date's month
+        this.displayedMonth = null;
+        this.createCalendar(this.calendar);
+    }
+
+    showDateError(message) {
+        alert(message);
+    }
+
     toggleCalendar() {
         const isOpen = this.calendar.classList.contains('open');
         if (isOpen) {
@@ -203,7 +278,7 @@ export class CustomDatePicker {
 
     selectDate(dateStr) {
         this.value = dateStr;
-        this.selectedText.textContent = this.getFormattedDate();
+        this.dateInput.value = dateStr;
 
         // Update original input and trigger change event
         this.originalInput.value = dateStr;
@@ -275,7 +350,7 @@ export class CustomDatePicker {
     // Method to programmatically update the date picker value
     updateValue(newValue) {
         this.value = newValue;
-        this.selectedText.textContent = this.getFormattedDate();
+        this.dateInput.value = newValue || '';
         this.originalInput.value = newValue;
         this.updateCalendarSelection();
     }
