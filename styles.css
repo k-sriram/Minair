@@ -1041,7 +1041,8 @@ input[type="number"] {
     display: flex;
     align-items: center;
     justify-content: center;
-    min-height: 32px; /* 16px icon + 0.5rem padding top/bottom */
+    min-height: 32px;
+    /* 16px icon + 0.5rem padding top/bottom */
     width: auto;
 }
 
@@ -1180,6 +1181,111 @@ input[type="number"] {
     margin: 0;
     color: var(--text-secondary);
     font-size: 0.875rem;
+}
+
+/* Floating Notifications */
+.notification-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    pointer-events: none;
+    max-width: 400px;
+}
+
+.floating-notification {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem 1.25rem;
+    margin-bottom: 0.75rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 16px var(--shadow-medium);
+    backdrop-filter: blur(8px);
+    border: 1px solid;
+    pointer-events: auto;
+    transform: translateX(100%);
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    min-width: 320px;
+    font-size: 0.875rem;
+    line-height: 1.4;
+}
+
+.floating-notification.show {
+    transform: translateX(0);
+    opacity: 1;
+}
+
+.floating-notification.hide {
+    transform: translateX(100%);
+    opacity: 0;
+}
+
+.floating-notification.success {
+    background-color: var(--success-bg);
+    color: var(--success-text);
+    border-color: var(--success-border);
+}
+
+.floating-notification.error {
+    background-color: var(--error-bg);
+    color: var(--error-text);
+    border-color: var(--error-border);
+}
+
+.floating-notification.info {
+    background-color: var(--info-bg);
+    color: var(--info-text);
+    border-color: var(--info-border);
+}
+
+.notification-message {
+    flex: 1;
+    margin: 0;
+}
+
+.notification-close {
+    background: none;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    height: 24px;
+    transition: background-color 0.2s ease;
+}
+
+.notification-close:hover {
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="dark"] .notification-close:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.notification-close svg {
+    width: 14px;
+    height: 14px;
+}
+
+/* Mobile responsive notifications */
+@media (max-width: 768px) {
+    .notification-container {
+        top: 10px;
+        right: 10px;
+        left: 10px;
+        max-width: none;
+    }
+
+    .floating-notification {
+        min-width: auto;
+        width: 100%;
+    }
 }
 
 /* Responsive Design */

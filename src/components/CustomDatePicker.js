@@ -33,7 +33,7 @@ export class CustomDatePicker {
         arrow.type = 'button';
         arrow.className = 'date-picker-arrow';
         arrow.innerHTML = Icons.calendar; // Pre-calculated calendar icon
-        arrow.setAttribute('aria-label', 'Open calendar');        toggle.appendChild(dateInput);
+        arrow.setAttribute('aria-label', 'Open calendar'); toggle.appendChild(dateInput);
         toggle.appendChild(arrow);
 
         const calendar = document.createElement('div');
@@ -244,7 +244,13 @@ export class CustomDatePicker {
     }
 
     showDateError(message) {
-        alert(message);
+        // Use the global notification system if available
+        if (window.minairApp && window.minairApp.showNotification) {
+            window.minairApp.showNotification(message, 'error');
+        } else {
+            // Fallback to alert if notification system isn't available
+            alert(message);
+        }
     }
 
     toggleCalendar() {

@@ -90,7 +90,7 @@
                 lookupBtn.addEventListener('click', async () => {
                     const name = document.getElementById('target-name').value.trim();
                     if (!name) {
-                        this.showLookupMessage('Please enter a target name before lookup.', 'error');
+                        this.showNotification('Please enter a target name before lookup.', 'error');
                         return;
                     }
                     const origText = lookupBtn.innerHTML;
@@ -102,13 +102,13 @@
                             // coords: { raHours, decDeg }
                             document.getElementById('target-ra').value = this.coordinateFormatter.formatRA(coords.raHours);
                             document.getElementById('target-dec').value = this.coordinateFormatter.formatDec(coords.decDeg);
-                            this.showLookupMessage('Coordinates found and filled in.', 'success');
+                            this.showNotification('Coordinates found and filled in.', 'success');
                         } else {
-                            this.showLookupMessage('No coordinates found for "' + name + '". Please check the object name.', 'error');
+                            this.showNotification('No coordinates found for "' + name + '". Please check the object name.', 'error');
                         }
                     } catch (err) {
                         console.error('Lookup error:', err);
-                        this.showLookupMessage('Lookup failed: ' + err.message, 'error');
+                        this.showNotification('Lookup failed: ' + err.message, 'error');
                     } finally {
                         lookupBtn.disabled = false;
                         lookupBtn.innerHTML = origText;
@@ -344,7 +344,7 @@
 
             // Check if geolocation is supported
             if (!navigator.geolocation) {
-                this.showLookupMessage('Geolocation is not supported by this browser.', 'error');
+                this.showNotification('Geolocation is not supported by this browser.', 'error');
                 return;
             }
 
@@ -378,7 +378,7 @@
                     this.targetManager.updateRiseSetTimes();
                     this.updatePlot();
 
-                    this.showLookupMessage(`Location detected: ${lat.toFixed(4)}, ${lon.toFixed(4)}`, 'success');
+                    this.showNotification(`Location detected: ${lat.toFixed(4)}, ${lon.toFixed(4)}`, 'success');
 
                     // Restore button state
                     geolocationBtn.disabled = false;
@@ -402,7 +402,7 @@
                             errorMessage += 'An unknown error occurred.';
                             break;
                     }
-                    this.showLookupMessage(errorMessage, 'error');
+                    this.showNotification(errorMessage, 'error');
 
                     // Restore button state
                     geolocationBtn.disabled = false;
@@ -496,24 +496,82 @@
             document.getElementById('target-name').focus();
         }
 
-        showLookupMessage(message, type = 'info') {
-            const messageEl = document.getElementById('lookup-message');
-            messageEl.textContent = message;
-            messageEl.className = 'lookup-message ' + type;
-            messageEl.style.display = 'block';
+        showNotification(message, type = 'info') {
+            this.createFloatingNotification(message, type);
+        }
 
-            // Auto-hide success and info messages after 5 seconds
-            if (type === 'success' || type === 'info') {
-                setTimeout(() => {
-                    this.hideLookupMessage();
-                }, 5000);
+        createFloatingNotification(message, type) {
+            // Create notification container if it doesn't exist
+            let container = document.getElementById('notification-container');
+            if (!container) {
+                container = document.createElement('div');
+                container.id = 'notification-container';
+                container.className = 'notification-container';
+                document.body.appendChild(container);
             }
+
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.className = `floating-notification ${type}`;
+
+            // Create message content
+            const messageSpan = document.createElement('span');
+            messageSpan.className = 'notification-message';
+            messageSpan.textContent = message;
+
+            // Create close button
+            const closeButton = document.createElement('button');
+            closeButton.className = 'notification-close';
+            closeButton.innerHTML = this.icons.x;
+            closeButton.setAttribute('aria-label', 'Close notification');
+
+            // Assemble notification
+            notification.appendChild(messageSpan);
+            notification.appendChild(closeButton);
+            container.appendChild(notification);
+
+            // Show notification with animation
+            requestAnimationFrame(() => {
+                notification.classList.add('show');
+            });
+
+            // Auto-hide after 5 seconds
+            const timeoutId = setTimeout(() => {
+                this.removeNotification(notification);
+            }, 5000);
+
+            // Close button handler
+            closeButton.addEventListener('click', () => {
+                clearTimeout(timeoutId);
+                this.removeNotification(notification);
+            });
+
+            return notification;
+        }
+
+        removeNotification(notification) {
+            if (!notification || !notification.parentNode) return;
+
+            notification.classList.remove('show');
+            notification.classList.add('hide');
+
+            // Remove after animation completes
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 300);
         }
 
         hideLookupMessage() {
-            const messageEl = document.getElementById('lookup-message');
-            messageEl.style.display = 'none';
-            messageEl.className = 'lookup-message';
+            // Legacy method - now removes all notifications
+            const container = document.getElementById('notification-container');
+            if (container) {
+                const notifications = container.querySelectorAll('.floating-notification');
+                notifications.forEach(notification => {
+                    this.removeNotification(notification);
+                });
+            }
         }
 
         updatePlot() {
@@ -528,13 +586,13 @@
             const dec = document.getElementById('target-dec').value.trim();
 
             if (!name || !ra || !dec) {
-                this.showLookupMessage('Please fill in all target fields.', 'error');
+                this.showNotification('Please fill in all target fields.', 'error');
                 return;
             }
 
             try {
                 this.targetManager.addTarget(name, ra, dec);
-                this.showLookupMessage('Target "' + name + '" added successfully.', 'success');
+                this.showNotification('Target "' + name + '" added successfully.', 'success');
                 this.clearAddTargetForm();
                 // Trigger immediate update of observing info and plot for the new target
                 setTimeout(() => {
@@ -550,7 +608,7 @@
                 } else {
                     errorMessage += error.message;
                 }
-                this.showLookupMessage(errorMessage, 'error');
+                this.showNotification(errorMessage, 'error');
                 console.error('Target add error:', error);
             }
         }
