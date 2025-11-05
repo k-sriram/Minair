@@ -230,7 +230,8 @@ svg {
     color: var(--text-secondary);
 }
 
-.setting-group input {
+/* Global placeholder styling for all inputs */
+input {
     padding: 0.5rem;
     border: 1px solid var(--border-color);
     border-radius: 4px;
@@ -241,56 +242,19 @@ svg {
     transition: all 0.2s ease;
 }
 
-.setting-group input:hover {
-    background-color: var(--bg-tertiary);
+input:hover {
     border-color: var(--accent-color);
 }
 
-.setting-group input:focus {
-    outline: none;
-    background-color: var(--bg-tertiary);
-    border-color: var(--accent-color);
-    box-shadow: 0 0 0 3px var(--shadow-light);
-}
-
-/* Global placeholder styling for all inputs */
 input::placeholder {
-    color: var(--text-placeholder) !important;
-    opacity: 1 !important;
+    color: var(--text-placeholder);
+    opacity: 1;
 }
 
+/* Webkit for Safari/iOS */
 input::-webkit-input-placeholder {
-    color: var(--text-placeholder) !important;
-    opacity: 1 !important;
-}
-
-input::-moz-placeholder {
-    color: var(--text-placeholder) !important;
-    opacity: 1 !important;
-}
-
-input:-ms-input-placeholder {
-    color: var(--text-placeholder) !important;
-}
-
-/* Specific styling for setting group inputs */
-.setting-group input::placeholder {
-    color: var(--text-placeholder) !important;
-    opacity: 1 !important;
-}
-
-.setting-group input::-webkit-input-placeholder {
-    color: var(--text-placeholder) !important;
-    opacity: 1 !important;
-}
-
-.setting-group input::-moz-placeholder {
-    color: var(--text-placeholder) !important;
-    opacity: 1 !important;
-}
-
-.setting-group input:-ms-input-placeholder {
-    color: var(--text-placeholder) !important;
+    color: var(--text-placeholder);
+    opacity: 1;
 }
 
 /* Custom number input styling */
@@ -298,38 +262,26 @@ input:-ms-input-placeholder {
     position: relative;
     display: inline-flex;
     align-items: stretch;
+    border-radius: 4px;
 }
 
 .number-input-wrapper input[type="text"] {
-    padding: 0.5rem;
     padding-right: 0;
-    border: 1px solid var(--border-color);
-    border-right: none;
+    border-right: 0;
+    outline: 0;
     border-radius: 4px 0 0 4px;
-    background-color: var(--bg-secondary);
-    color: var(--text-primary);
-    font-size: 0.875rem;
     width: 60px;
     min-width: 60px;
     text-align: left;
     transition: all 0.2s ease;
 }
 
-.number-input-wrapper input[type="text"]:hover {
-    background-color: var(--bg-tertiary);
-    border-color: var(--accent-color);
-}
-
 .number-input-wrapper input[type="text"]:focus {
-    outline: none;
-    background-color: var(--bg-tertiary);
     border-color: var(--accent-color);
-    box-shadow: 0 0 0 3px var(--shadow-light);
 }
 
 /* Hover effects for the entire component */
 .number-input-wrapper:hover input[type="text"] {
-    background-color: var(--bg-tertiary);
     border-color: var(--accent-color);
 }
 
@@ -339,7 +291,10 @@ input:-ms-input-placeholder {
 
 .number-input-wrapper input[type="text"]:focus+.number-spinner {
     border-color: var(--accent-color);
-    box-shadow: 0 0 0 3px var(--shadow-light);
+}
+
+.number-input-wrapper:focus-within {
+    border: 0.8px solid white;
 }
 
 .number-spinner {
@@ -566,14 +521,10 @@ input[type="number"] {
 .setting-group .selected-date-input,
 .selected-date-input {
     flex: 1;
-    padding-left: 0.5rem;
     background: transparent;
     border: 0;
     outline: 0;
     box-shadow: none;
-    color: var(--text-primary);
-    font-size: 0.875rem;
-    font-family: inherit;
     padding: 0;
     margin: 0;
     min-width: auto;
@@ -738,13 +689,6 @@ input[type="number"] {
 .custom-location input {
     width: 6rem;
     min-width: 6rem;
-}
-
-.custom-location input:disabled {
-    background-color: var(--bg-tertiary);
-    color: var(--text-secondary);
-    cursor: not-allowed;
-    opacity: 0.8;
 }
 
 /* Location input with geolocation button */
@@ -967,11 +911,6 @@ input[type="number"] {
 
 .form-row input {
     flex: 1;
-    padding: 0.75rem;
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    background-color: var(--bg-secondary);
-    color: var(--text-primary);
     min-width: 170px;
 }
 
