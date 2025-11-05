@@ -164,6 +164,7 @@ export class CustomDatePicker {
         this.dateInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
                 e.preventDefault();
+                e.stopPropagation(); // Prevent event from bubbling to wrapper
                 this.validateAndSetDate();
             }
         });
