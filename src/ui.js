@@ -93,10 +93,10 @@
                         this.showLookupMessage('Please enter a target name before lookup.', 'error');
                         return;
                     }
+                    const origText = lookupBtn.innerHTML;
                     try {
                         lookupBtn.disabled = true;
-                        const origText = lookupBtn.textContent;
-                        lookupBtn.textContent = 'Looking...';
+                        lookupBtn.innerHTML = this.icons.loader;
                         const coords = await this.targetManager.lookupCoordinates(name);
                         if (coords) {
                             // coords: { raHours, decDeg }
@@ -111,7 +111,7 @@
                         this.showLookupMessage('Lookup failed: ' + err.message, 'error');
                     } finally {
                         lookupBtn.disabled = false;
-                        lookupBtn.textContent = 'Lookup';
+                        lookupBtn.innerHTML = origText;
                     }
                 });
             }
