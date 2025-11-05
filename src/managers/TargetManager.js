@@ -26,6 +26,7 @@ export class TargetManager {
         this.timeManager = timeManager;
         this.initialized = true;
         this.clearButton = document.getElementById('plot-clear-selection');
+        this.removeAllButton = document.getElementById('target-remove-all');
         this.loadDefaultTargets();
     }
 
@@ -96,6 +97,7 @@ export class TargetManager {
         this.targets.push(target);
         this.updateTargetTable();
         this.saveTargetsToStorage(); // Persist to localStorage
+        this.removeAllButton.disabled = false;
         this.updateClearButtonState();
         return target;
     }
@@ -117,6 +119,9 @@ export class TargetManager {
         // Toggle off the target visibility in the plot
         if (window.minairApp && window.minairApp.plotManager) {
             window.minairApp.plotManager.removeTargets(ids);
+        }
+        if (this.removeAllButton) {
+            this.removeAllButton.disabled = this.targets.length === 0;
         }
         this.updateClearButtonState();
     }
