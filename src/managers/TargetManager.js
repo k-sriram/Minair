@@ -106,15 +106,26 @@ export class TargetManager {
     }
 
     removeTarget(id) {
-        this.targets = this.targets.filter(t => t.id !== id);
+        this.removeTargets([id]);
+    }
+
+    removeAllTargets() {
+        const ids = this.targets.map(t => t.id);
+        this.removeTargets(ids);
+    }
+
+    removeTargets(ids) {
+        this.targets = this.targets.filter(t => !ids.includes(t.id));
         this.updateTargetTable();
         this.updateTargetsObservingInfo();
         this.saveTargetsToStorage(); // Persist to localStorage
         // Toggle off the target visibility in the plot
         if (window.minairApp && window.minairApp.plotManager) {
-            window.minairApp.plotManager.toggleTarget(id, 'remove');
+            ids.forEach(id => {
+                window.minairApp.plotManager.toggleTarget(id, 'remove');
+            });
         }
-        // Update plot after removing target
+        // Update plot after removing targets
         if (window.minairApp && window.minairApp.updatePlot) {
             setTimeout(() => {
                 window.minairApp.updatePlot();

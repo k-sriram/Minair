@@ -161,6 +161,12 @@
                 this.updatePlot();
             });
 
+            // Remove all targets button
+            document.getElementById('target-remove-all')?.addEventListener('click', () => {
+                this.targetManager.removeAllTargets();
+                this.updatePlot();
+            });
+
             // Window resize handler for plot
             window.addEventListener('resize', () => {
                 this.plotManager.handleResize();
