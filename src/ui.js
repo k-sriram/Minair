@@ -453,26 +453,6 @@
             }
         }
 
-        // Helper to get current user timezone offset in minutes
-        getUserTimezoneOffsetMinutes() {
-            const timezoneSelect = document.getElementById('timezone-select');
-            if (!timezoneSelect) {
-                // Fallback to browser timezone
-                return -new Date().getTimezoneOffset();
-            }
-
-            const selectedTimezone = timezoneSelect.value;
-            const match = selectedTimezone.match(/UTC([+-])(\d{1,2})(?::(\d{2}))?/);
-            if (!match) {
-                return -new Date().getTimezoneOffset();
-            }
-
-            const sign = match[1] === '+' ? 1 : -1;
-            const hours = parseInt(match[2]);
-            const minutes = parseInt(match[3] || '0');
-            return sign * (hours * 60 + minutes);
-        }
-
         // Helper to get current observation parameters
         getObservationParameters() {
             const location = this.locationManager.getLocation();
@@ -491,7 +471,6 @@
             document.getElementById('target-name').value = '';
             document.getElementById('target-ra').value = '';
             document.getElementById('target-dec').value = '';
-            this.hideLookupMessage();
             // Focus back to target name for next entry
             document.getElementById('target-name').focus();
         }
@@ -561,17 +540,6 @@
                     notification.parentNode.removeChild(notification);
                 }
             }, 300);
-        }
-
-        hideLookupMessage() {
-            // Legacy method - now removes all notifications
-            const container = document.getElementById('notification-container');
-            if (container) {
-                const notifications = container.querySelectorAll('.floating-notification');
-                notifications.forEach(notification => {
-                    this.removeNotification(notification);
-                });
-            }
         }
 
         updatePlot() {

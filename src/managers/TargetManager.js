@@ -287,24 +287,14 @@ export class TargetManager {
 
     // Helper to get current observation parameters
     getObservationParameters() {
-        if (!this.locationManager) {
-            // Fallback to default location if not initialized
-            return {
-                obsLat: 51.4779,
-                obsLon: -0.0015,
-                obsDay: new Date()
-            };
+        if (window.minairApp && window.minairApp.getObservationParameters) {
+            return window.minairApp.getObservationParameters();
         }
-
-        const location = this.locationManager.getLocation();
-        const obsDateInput = document.getElementById('observation-date');
-        const obsDateStr = obsDateInput ? obsDateInput.value : new Date().toISOString().split('T')[0];
-        const obsDate = new Date(obsDateStr);
-
+        // Fallback to default location if not initialized
         return {
-            obsLat: location.lat,
-            obsLon: location.lon,
-            obsDay: obsDate
+            obsLat: 51.4779,
+            obsLon: -0.0015,
+            obsDay: new Date()
         };
     }
 
