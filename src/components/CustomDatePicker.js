@@ -8,6 +8,7 @@ export class CustomDatePicker {
         this.value = inputElement.value;
         this.createCustomDatePicker();
         this.bindEvents();
+        this.origTab = 0;
     }
 
     createCustomDatePicker() {
@@ -20,6 +21,9 @@ export class CustomDatePicker {
             wrapper.classList.add(...this.originalInput.classList);
         }
 
+        // Preserve any tabindex from the original input element
+        this.origTab = this.originalInput.getAttribute('tabindex') || '0';
+
         const toggle = document.createElement('div');
         toggle.className = 'date-picker-toggle';
 
@@ -28,6 +32,9 @@ export class CustomDatePicker {
         dateInput.className = 'selected-date-input';
         dateInput.value = this.value || '';
         dateInput.placeholder = 'Y-M-D';
+        dateInput.setAttribute('aria-label', 'Date input in Y-M-D format');
+        dateInput.setAttribute('tabindex', this.origTab);
+        dateInput.id = this.originalInput.id + '-custom';
 
         const arrow = document.createElement('button');
         arrow.type = 'button';

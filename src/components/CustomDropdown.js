@@ -9,6 +9,8 @@ export class CustomDropdown {
             text: opt.textContent
         }));
 
+        this.origTab = 0;
+
         this.createCustomDropdown();
         this.bindEvents();
     }
@@ -22,6 +24,10 @@ export class CustomDropdown {
         if (this.originalSelect.className) {
             wrapper.classList.add(...this.originalSelect.classList);
         }
+
+        // Preserve any tabindex from the original select element
+        this.origTab = this.originalSelect.getAttribute('tabindex') || '0';
+        wrapper.setAttribute('tabindex', this.origTab);
 
         const toggle = document.createElement('div');
         toggle.className = 'dropdown-toggle';
@@ -101,14 +107,14 @@ export class CustomDropdown {
     openDropdown() {
         this.toggle.classList.add('open');
         this.menu.classList.add('open');
-        this.wrapper.setAttribute('tabindex', '0');
+        this.wrapper.setAttribute('tabindex', this.origTab); // Use stored tabindex
         this.wrapper.focus();
     }
 
     closeDropdown() {
         this.toggle.classList.remove('open');
         this.menu.classList.remove('open');
-        this.wrapper.removeAttribute('tabindex');
+        this.wrapper.setAttribute('tabindex', this.origTab); // Use stored tabindex
     }
 
     selectOption(value) {

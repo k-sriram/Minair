@@ -43,7 +43,7 @@ SOFTWARE.
             <div class="settings-left">
                 <div class="setting-group">
                     <label for="location-select">Location:</label>
-                    <select id="location-select" class="location-dropdown">
+                    <select id="location-select" class="location-dropdown" tabindex="1">
                         <option value="custom">Custom Location</option>
                         <!-- Observatory options will be populated by JavaScript -->
                     </select>
@@ -51,16 +51,16 @@ SOFTWARE.
                 <div class="custom-location" id="custom-location">
                     <div class="setting-group">
                         <label for="latitude">Lat:</label>
-                        <input type="text" id="latitude" placeholder="Latitude" />
+                        <input type="text" id="latitude" placeholder="Latitude" tabindex="2" />
                     </div>
                     <div class="setting-group">
                         <label for="longitude">Lon:</label>
-                        <input type="text" id="longitude" placeholder="Longitude" />
+                        <input type="text" id="longitude" placeholder="Longitude" tabindex="3" />
                     </div>
                     <div class="setting-group">
                         <label for="geolocation-btn" style="visibility: hidden;">A</label>
                         <button id="geolocation-btn" class="btn-geolocation full-width" type="button"
-                            aria-label="Use my current location" title="Use my current location">
+                            aria-label="Use my current location" title="Use my current location" tabindex="4">
                             <i data-feather="map-pin"></i>
                         </button>
                     </div>
@@ -72,21 +72,21 @@ SOFTWARE.
             <div class="settings-right">
                 <div class="setting-group">
                     <label for="observation-date">Date:</label>
-                    <input type="date" id="observation-date" />
+                    <input type="date" id="observation-date" tabindex="5" />
                 </div>
                 <div class="setting-group">
                     <label for="min-altitude">Min Alt (°):</label>
                     <div class="number-input-wrapper">
-                        <input type="text" id="min-altitude" value="30" data-min="0" data-max="90" />
+                        <input type="text" id="min-altitude" value="30" data-min="0" data-max="90" tabindex="6" />
                         <div class="number-spinner">
-                            <button type="button" class="spinner-btn" data-action="increment">▲</button>
-                            <button type="button" class="spinner-btn" data-action="decrement">▼</button>
+                            <button type="button" class="spinner-btn" data-action="increment" tabindex="7">▲</button>
+                            <button type="button" class="spinner-btn" data-action="decrement" tabindex="8">▼</button>
                         </div>
                     </div>
                 </div>
                 <div class="setting-group">
                     <label for="theme-select">Theme:</label>
-                    <select id="theme-select" class="theme-dropdown">
+                    <select id="theme-select" class="theme-dropdown" tabindex="9">
                         <option value="light">Light</option>
                         <option value="dark">Dark</option>
                         <option value="red">Night Vision</option>
@@ -99,15 +99,16 @@ SOFTWARE.
     <!-- Time Display Section -->
     <section class="time-display">
         <div class="clock-container">
-            <button class="time-clock" id="utc-clock" data-timezone="utc">
+            <button class="time-clock" id="utc-clock" data-timezone="utc" tabindex="10">
                 <div class="time-label">UTC</div>
                 <div class="time-value" id="utc-time">--:--:--</div>
             </button>
 
-            <button class="time-clock" id="lst-clock" data-timezone="lst">
+            <button class="time-clock" id="lst-clock" data-timezone="lst" tabindex="11">
                 <div class="time-label">LST</div>
                 <div class="time-value" id="lst-time">--:--:--</div>
-            </button> <button class="time-clock" id="user-clock" data-timezone="user">
+            </button>
+            <button class="time-clock" id="user-clock" data-timezone="user" tabindex="12">
                 <div class="time-label">
                     <select id="timezone-select" class="timezone-dropdown">
                         <option value="UTC-12">UTC-12:00</option>
