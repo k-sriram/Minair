@@ -16,6 +16,7 @@ export class TargetManager {
         this.targets = [];
         this.locationManager = null;
         this.timeManager = null;
+        this.clearButton = null;
         this.initialized = false;
     }
 
@@ -24,6 +25,7 @@ export class TargetManager {
         this.locationManager = locationManager;
         this.timeManager = timeManager;
         this.initialized = true;
+        this.clearButton = document.getElementById('plot-clear-selection');
         this.loadDefaultTargets();
     }
 
@@ -99,6 +101,7 @@ export class TargetManager {
         this.targets.push(target);
         this.updateTargetTable();
         this.saveTargetsToStorage(); // Persist to localStorage
+        this.updateClearButtonState();
         return target;
     }
 
@@ -116,6 +119,16 @@ export class TargetManager {
             setTimeout(() => {
                 window.minairApp.updatePlot();
             }, 100);
+        }
+        this.updateClearButtonState();
+    }
+
+    updateClearButtonState() {
+        // Check if any targets are selected in the plot. If not, disable the clear button.
+        const tbody = document.getElementById('target-table-body');
+        const anySelected = tbody.querySelector('tr.target-selected') !== null;
+        if (this.clearButton) {
+            this.clearButton.disabled = !anySelected;
         }
     }
 
@@ -143,6 +156,7 @@ export class TargetManager {
 
             tbody.appendChild(row);
         });
+        this.updateClearButtonState();
     }
 
     async updateTableHeaderTimeLabels() {
@@ -196,10 +210,12 @@ export class TargetManager {
             // Don't trigger on button clicks
             if (e.target.tagName === 'BUTTON') return;
 
+            
             if (window.minairApp && window.minairApp.plotManager) {
                 window.minairApp.plotManager.toggleTarget(target.id);
                 row.classList.toggle('target-selected');
             }
+            this.updateClearButtonState();
         });
 
         return row;
