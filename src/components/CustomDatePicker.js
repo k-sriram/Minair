@@ -27,7 +27,7 @@ export class CustomDatePicker {
         dateInput.type = 'text';
         dateInput.className = 'selected-date-input';
         dateInput.value = this.value || '';
-        dateInput.placeholder = 'YYYY-MM-DD';
+        dateInput.placeholder = 'Y-M-D';
 
         const arrow = document.createElement('button');
         arrow.type = 'button';
@@ -202,8 +202,8 @@ export class CustomDatePicker {
     validateAndSetDate() {
         const inputValue = this.dateInput.value.trim();
 
-        // Validate YYYY-MM-DD format
-        const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+        // Validate Y-M-D format (flexible: 2023-1-5, 2023-01-05, etc.)
+        const dateRegex = /^\d+-\d{1,2}-\d{1,2}$/;
 
         if (!inputValue) {
             // Empty input is allowed
@@ -216,7 +216,7 @@ export class CustomDatePicker {
         if (!dateRegex.test(inputValue)) {
             // Invalid format - restore previous value and show error
             this.dateInput.value = this.value || '';
-            this.showDateError('Please enter date in YYYY-MM-DD format');
+            this.showDateError('Please enter date in Y-M-D format (e.g., 2023-12-25 or 2023-1-5)');
             return;
         }
 
@@ -229,7 +229,7 @@ export class CustomDatePicker {
             testDate.getDate() !== day) {
             // Invalid date - restore previous value and show error
             this.dateInput.value = this.value || '';
-            this.showDateError('Please enter a valid date in YYYY-MM-DD format');
+            this.showDateError('Please enter a valid date in Y-M-D format (e.g., 2023-12-25 or 2023-1-5)');
             return;
         }
 
