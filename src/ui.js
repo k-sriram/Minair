@@ -23,6 +23,7 @@
             this.timeManager = new modules.TimeManager(this.locationManager);
             this.targetManager = new modules.TargetManager();
             this.plotManager = new modules.PlotManager();
+            this.icons = modules.Icons.Icons;
 
             // Initialize TargetManager with dependencies
             this.targetManager.initialize(this.locationManager, this.timeManager);
@@ -351,7 +352,7 @@
             geolocationBtn.disabled = true;
             geolocationBtn.classList.add('loading');
             const originalText = geolocationBtn.innerHTML;
-            geolocationBtn.innerHTML = '<i data-feather="loader" class="loading-icon"></i>';
+            geolocationBtn.innerHTML = this.icons.loader;
 
             navigator.geolocation.getCurrentPosition(
                 (position) => {

@@ -800,8 +800,9 @@ input[type="number"] {
     cursor: wait;
 }
 
-.loading-icon {
-    animation: spin 1s linear infinite;
+.loading-icon,
+.loading-icon svg {
+    animation: spin 2s linear infinite;
 }
 
 @keyframes spin {
