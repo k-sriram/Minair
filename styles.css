@@ -703,11 +703,6 @@ input[type="number"] {
 }
 
 .btn-geolocation {
-    background-color: var(--bg-secondary);
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    color: var(--text-secondary);
-    cursor: pointer;
     font-size: 1rem;
     padding: 0.5rem 0.75rem;
     transition: all 0.2s ease;
@@ -718,30 +713,6 @@ input[type="number"] {
     height: calc(1.05em + 1rem + 0.1rem);
     /* Match input height: font-size + padding + border */
     box-sizing: border-box;
-}
-
-.btn-geolocation svg {
-    stroke-width: 2;
-}
-
-.btn-geolocation:hover:not(:disabled) {
-    background-color: var(--accent-color);
-    border-color: var(--accent-color);
-    color: var(--bg-primary);
-}
-
-.btn-geolocation:disabled {
-    background-color: var(--bg-tertiary);
-    color: var(--text-placeholder);
-    cursor: not-allowed;
-    opacity: 0.6;
-}
-
-.btn-geolocation.loading {
-    background-color: var(--accent-color);
-    border-color: var(--accent-color);
-    color: var(--bg-primary);
-    cursor: wait;
 }
 
 .loading-icon,
@@ -814,10 +785,6 @@ input[type="number"] {
     letter-spacing: 0.05em;
 }
 
-
-
-
-
 /* Target Section */
 .target-section {
     padding: 2rem;
@@ -837,8 +804,6 @@ input[type="number"] {
     font-weight: 500;
     color: var(--text-primary);
 }
-
-
 
 /* Target Table */
 .target-table-container {
@@ -931,6 +896,9 @@ input[type="number"] {
 .btn:disabled {
     opacity: 0.6;
     cursor: not-allowed;
+    background-color: var(--text-tertiary);
+    border-color: var(--text-placeholder);
+    color: var(--text-placeholder);
 }
 
 /* Button Variants */
@@ -955,11 +923,6 @@ input[type="number"] {
     background-color: var(--accent-hover);
 }
 
-.btn-primary:disabled {
-    background-color: var(--text-placeholder);
-    border-color: var(--text-placeholder);
-}
-
 /* Compact button variant for controls */
 .btn-compact {
     padding: 0.5rem 1rem;
@@ -980,14 +943,10 @@ input[type="number"] {
     display: flex;
     align-items: center;
     justify-content: center;
-    min-height: 32px;
+    min-height: 34.4px;
     /* 16px icon + 0.5rem padding top/bottom */
     width: auto;
 }
-
-
-
-
 
 .lookup-message {
     margin-top: 0.5rem;
