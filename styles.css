@@ -1297,6 +1297,21 @@ input[type="number"] {
         padding: 1rem 0;
     }
 
+    .site-title {
+        order: 1;
+        /* Show title first */
+    }
+
+    .settings-left {
+        order: 2;
+        /* Show left settings second */
+    }
+
+    .settings-right {
+        order: 3;
+        /* Show right settings third */
+    }
+
     .settings-left,
     .settings-right {
         position: static;
