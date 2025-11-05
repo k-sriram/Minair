@@ -77,11 +77,6 @@ export class TargetManager {
             // After populating table, compute current alt/az and rise/set for each target
             this.updateTargetsObservingInfo();
             // Update plot with loaded targets
-            if (window.minairApp && window.minairApp.updatePlot) {
-                setTimeout(() => {
-                    window.minairApp.updatePlot();
-                }, 200);
-            }
         } catch (error) {
             console.error('Failed to load targets:', error);
             // Fallback to user targets if available, otherwise empty list
@@ -121,15 +116,7 @@ export class TargetManager {
         this.saveTargetsToStorage(); // Persist to localStorage
         // Toggle off the target visibility in the plot
         if (window.minairApp && window.minairApp.plotManager) {
-            ids.forEach(id => {
-                window.minairApp.plotManager.toggleTarget(id, 'remove');
-            });
-        }
-        // Update plot after removing targets
-        if (window.minairApp && window.minairApp.updatePlot) {
-            setTimeout(() => {
-                window.minairApp.updatePlot();
-            }, 100);
+            window.minairApp.plotManager.removeTargets(ids);
         }
         this.updateClearButtonState();
     }

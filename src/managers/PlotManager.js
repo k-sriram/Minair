@@ -3,7 +3,8 @@ import { formatDateHHMM } from "../utils/CoordinateFormatter.js";
 /* PlotManager.js — Plot management for Minair altitude tracking
  */
 export class PlotManager {
-    constructor() {
+    constructor(targetManager) {
+        this.targetManager = targetManager;
         this.canvas = null;
         this.ctx = null;
         this.isInitialized = false;
@@ -32,9 +33,10 @@ export class PlotManager {
         this.updateDeviceType();
     }
 
-    initialize() {
+    initialize(timeReference = 'utc') {
         if (this.isInitialized) return;
 
+        this.timeReference = timeReference;
         this.canvas = document.getElementById('altitude-plot-canvas');
         if (!this.canvas) {
             console.error('Plot canvas not found');
@@ -205,6 +207,14 @@ export class PlotManager {
         this.redraw();
     }
 
+    removeTargets(targetIds) {
+        targetIds.forEach(targetId => {
+            this.selectedTargets.delete(targetId);
+            this.targetData.delete(targetId);
+        });
+        this.redraw();
+    }
+
     clearSelection() {
         this.selectedTargets.clear();
         // Show all targets when none are selected
@@ -225,6 +235,12 @@ export class PlotManager {
         // Clear canvas
         this.ctx.fillStyle = this.getComputedColor(this.plotConfig.backgroundColor);
         this.ctx.fillRect(0, 0, width, height);
+
+        // Check if there are no targets to display
+        if (this.targetManager.targets.length === 0) {
+            this.drawEmptyMessage(width, height);
+            return;
+        }
 
         const plotArea = {
             left: this.plotConfig.padding.left,
@@ -548,6 +564,22 @@ export class PlotManager {
             // Move to next position
             currentX += itemWidth;
         }
+    }
+
+    drawEmptyMessage(width, height) {
+        this.ctx.fillStyle = this.getComputedColor(this.plotConfig.textColor);
+        this.ctx.textAlign = 'center';
+
+        // Set font size based on device type
+        const fontSize = this.isMobile ? '16px' : '18px';
+        this.ctx.font = `${fontSize} sans-serif`;
+
+        // Center the message vertically and horizontally
+        const centerX = width / 2;
+        const centerY = height / 2;
+
+        // Draw the message
+        this.ctx.fillText('Add targets using the form at the bottom of the page to view the altitude plot', centerX, centerY - 10);
     }
 
     // Helper method to wrap text within a given width

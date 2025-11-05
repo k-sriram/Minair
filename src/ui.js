@@ -22,7 +22,7 @@
             this.locationManager = new modules.LocationManager();
             this.timeManager = new modules.TimeManager(this.locationManager);
             this.targetManager = new modules.TargetManager();
-            this.plotManager = new modules.PlotManager();
+            this.plotManager = new modules.PlotManager(this.targetManager);
             this.icons = modules.Icons.Icons;
 
             // Initialize TargetManager with dependencies
@@ -198,9 +198,7 @@
 
             // Initialize plot manager
             setTimeout(() => {
-                this.plotManager.initialize();
-                // Set initial time reference from TimeManager
-                this.plotManager.setTimeReference(this.timeManager.selectedTimeReference);
+                this.plotManager.initialize(this.timeManager.selectedTimeReference);
                 this.updatePlot();
             }, 100);
 
