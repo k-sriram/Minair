@@ -180,7 +180,7 @@ export class TargetManager {
             <td class="cell-rise">--:--</td>
             <td class="cell-set">--:--</td>
             <td class="cell-actions">
-                <button class="btn btn-secondary btn-compact" data-target-id="${target.id}">${Icons.trash}</button>
+                <button class="btn btn-secondary" data-target-id="${target.id}">${Icons.trash}</button>
             </td>
         `;
 
