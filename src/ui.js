@@ -178,6 +178,11 @@
                 this.updatePlot();
             });
 
+            // Export targets table as CSV
+            document.getElementById('target-export-csv')?.addEventListener('click', () => {
+                this.exportTargetsToCsv();
+            });
+
             // Remove all targets button
             document.getElementById('target-remove-all')?.addEventListener('click', () => {
                 this.targetManager.removeAllTargets();
@@ -487,6 +492,75 @@
                 obsLon: location.lon,
                 obsDay: obsDate
             };
+        }
+
+        escapeCsvValue(value) {
+            const text = String(value ?? '').replace(/\r?\n|\r/g, ' ').trim();
+            return `"${text.replace(/"/g, '""')}"`;
+        }
+
+        exportTargetsToCsv() {
+            const table = document.getElementById('target-table');
+            const tbody = document.getElementById('target-table-body');
+            if (!table || !tbody) {
+                this.showNotification('Target table not found.', 'error');
+                return;
+            }
+
+            const headerCells = Array.from(table.querySelectorAll('thead th'));
+            const headers = headerCells
+                .map(th => th.textContent.trim())
+                .filter(text => text && text !== 'Actions');
+
+            const rows = Array.from(tbody.querySelectorAll('tr')).map(row => {
+                const cells = Array.from(row.querySelectorAll('td'));
+                return cells.slice(0, headers.length).map(cell => cell.textContent.trim());
+            });
+
+            const location = this.locationManager.getLocation();
+            const obsDate = document.getElementById('observation-date')?.value || '';
+            const minAlt = document.getElementById('min-altitude')?.value || '';
+            const selectedRef = this.timeManager.selectedTimeReference || 'utc';
+            const selectedRefDisplay = selectedRef.toUpperCase();
+            const selectedRefTime = document.getElementById(`${selectedRef}-time`)?.textContent?.trim() || '';
+            const generatedAt = new Date().toISOString();
+
+            const metadata = [
+                ['Generated At (UTC)', generatedAt],
+                ['Observing Location', location.name || ''],
+                ['Observing Latitude', location.lat],
+                ['Observing Longitude', location.lon],
+                ['Observation Date', obsDate],
+                ['Minimum Altitude (deg)', minAlt],
+                ['Selected Time Reference', selectedRefDisplay],
+                ['Current Time (' + selectedRefDisplay + ')', selectedRefTime]
+            ];
+
+            const csvLines = [];
+            metadata.forEach(([key, value]) => {
+                csvLines.push([this.escapeCsvValue(key), this.escapeCsvValue(value)].join(','));
+            });
+            csvLines.push('');
+            csvLines.push(headers.map(value => this.escapeCsvValue(value)).join(','));
+            rows.forEach(row => {
+                csvLines.push(row.map(value => this.escapeCsvValue(value)).join(','));
+            });
+
+            const csvContent = csvLines.join('\n');
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+            const filename = `minair-targets-${timestamp}.csv`;
+
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+
+            this.showNotification(`Exported ${rows.length} target(s) to CSV.`, 'success');
         }
 
         clearAddTargetForm() {
