@@ -27,7 +27,7 @@ export class TargetManager {
         this.initialized = true;
         this.clearButton = document.getElementById('plot-clear-selection');
         this.removeAllButton = document.getElementById('target-remove-all');
-        this.loadDefaultTargets();
+        this.loadTargetsPromise = this.loadDefaultTargets();
     }
 
     // localStorage persistence methods
@@ -213,7 +213,7 @@ export class TargetManager {
             // Don't trigger on button clicks
             if (e.target.tagName === 'BUTTON') return;
 
-            
+
             if (window.minairApp && window.minairApp.plotManager) {
                 window.minairApp.plotManager.toggleTarget(target.id);
                 row.classList.toggle('target-selected');

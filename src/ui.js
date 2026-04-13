@@ -30,6 +30,7 @@
 
             // Store coordinate formatter for easy access
             this.coordinateFormatter = modules.CoordinateFormatter;
+            this.sharedState = this.parseSharedState();
 
             this.setupEventListeners();
             this.initialize();
@@ -183,6 +184,11 @@
                 this.exportTargetsToCsv();
             });
 
+            // Share current state as a GET link
+            document.getElementById('target-share-link')?.addEventListener('click', () => {
+                this.shareCurrentState();
+            });
+
             // Remove all targets button
             document.getElementById('target-remove-all')?.addEventListener('click', () => {
                 this.targetManager.removeAllTargets();
@@ -204,16 +210,23 @@
 
             // Wait for observatories to load, then populate dropdown and initialize location UI
             await this.locationManager.loadObservatories();
+            if (this.targetManager.loadTargetsPromise) {
+                await this.targetManager.loadTargetsPromise;
+            }
             this.populateLocationDropdown();
             this.updateLocationUI();
 
-            // Set observation date to tonight's observing session (after location is fully loaded)
-            const location = this.locationManager.getLocation();
-            const tonightDate = window.MinairAstronomy.getLocalDayOfTonightAtNow(location.lon);
-            const dateString = tonightDate.toISOString().split('T')[0];
-            document.getElementById('observation-date').value = dateString;
-            // Update the TargetManager with the initial observation date
-            this.targetManager.updateRiseSetTimes();
+            const sharedStateApplied = this.applySharedState(this.sharedState);
+
+            if (!sharedStateApplied) {
+                // Set observation date to tonight's observing session (after location is fully loaded)
+                const location = this.locationManager.getLocation();
+                const tonightDate = window.MinairAstronomy.getLocalDayOfTonightAtNow(location.lon);
+                const dateString = tonightDate.toISOString().split('T')[0];
+                document.getElementById('observation-date').value = dateString;
+                // Update the TargetManager with the initial observation date
+                this.targetManager.updateRiseSetTimes();
+            }
 
             // Initialize custom date picker after setting the date
             this.initializeCustomDatePicker();
@@ -494,9 +507,174 @@
             };
         }
 
+        parseSharedState() {
+            const params = new URLSearchParams(window.location.search);
+            const relevantKeys = ['location', 'lat', 'lon', 'date', 'minAlt', 'timeRef', 'timezone', 'targets'];
+            const hasRelevantParams = relevantKeys.some(key => params.has(key));
+
+            if (!hasRelevantParams) {
+                return null;
+            }
+
+            let targets = null;
+            let targetsProvided = false;
+            if (params.has('targets')) {
+                targetsProvided = true;
+                try {
+                    targets = JSON.parse(params.get('targets'));
+                } catch (error) {
+                    console.warn('Failed to parse shared targets:', error);
+                    targets = [];
+                }
+            }
+
+            return {
+                location: params.get('location'),
+                lat: params.get('lat'),
+                lon: params.get('lon'),
+                date: params.get('date'),
+                minAlt: params.get('minAlt'),
+                timeRef: params.get('timeRef'),
+                timezone: params.get('timezone'),
+                targets,
+                targetsProvided
+            };
+        }
+
+        applySharedState(sharedState) {
+            if (!sharedState) {
+                return false;
+            }
+
+            const locationSelect = document.getElementById('location-select');
+            const latInput = document.getElementById('latitude');
+            const lonInput = document.getElementById('longitude');
+            const obsDateInput = document.getElementById('observation-date');
+            const minAltInput = document.getElementById('min-altitude');
+            const timezoneSelect = document.getElementById('timezone-select');
+            let locationChanged = false;
+
+            if (sharedState.location) {
+                if (sharedState.location === 'custom' && sharedState.lat !== null && sharedState.lon !== null && sharedState.lat !== '' && sharedState.lon !== '') {
+                    const lat = parseFloat(sharedState.lat);
+                    const lon = parseFloat(sharedState.lon);
+                    if (!Number.isNaN(lat) && !Number.isNaN(lon)) {
+                        this.locationManager.setLocation(lat, lon, 'Custom Location', null);
+                        locationSelect.value = 'custom';
+                        if (this.customDropdowns?.location) {
+                            this.customDropdowns.location.updateValue('custom');
+                        }
+                        locationChanged = true;
+                    }
+                } else if (this.locationManager.observatories[sharedState.location]) {
+                    this.locationManager.setObservatory(sharedState.location);
+                    locationSelect.value = sharedState.location;
+                    if (this.customDropdowns?.location) {
+                        this.customDropdowns.location.updateValue(sharedState.location);
+                    }
+                    locationChanged = true;
+                }
+            }
+
+            if (locationChanged) {
+                this.updateLocationUI();
+            }
+
+            if (sharedState.date) {
+                obsDateInput.value = sharedState.date;
+            }
+
+            if (sharedState.minAlt !== null && sharedState.minAlt !== undefined && sharedState.minAlt !== '') {
+                minAltInput.value = sharedState.minAlt;
+                const minAlt = parseFloat(sharedState.minAlt);
+                if (!Number.isNaN(minAlt)) {
+                    this.plotManager.setMinAltitude(minAlt);
+                }
+            }
+
+            if (sharedState.timeRef) {
+                this.timeManager.setTimeReference(sharedState.timeRef);
+                this.plotManager.setTimeReference(sharedState.timeRef);
+            }
+
+            if (sharedState.timezone && timezoneSelect) {
+                timezoneSelect.value = sharedState.timezone;
+                if (this.customDropdowns?.timezone) {
+                    this.customDropdowns.timezone.updateValue(sharedState.timezone);
+                }
+            }
+
+            if (sharedState.targetsProvided) {
+                this.targetManager.removeAllTargets();
+                if (Array.isArray(sharedState.targets)) {
+                    sharedState.targets.forEach(target => {
+                        if (target && target.name && target.ra && target.dec) {
+                            this.targetManager.addTarget(target.name, target.ra, target.dec);
+                        }
+                    });
+                }
+            }
+
+            this.targetManager.updateRiseSetTimes();
+            this.updatePlot();
+            return true;
+        }
+
         escapeCsvValue(value) {
             const text = String(value ?? '').replace(/\r?\n|\r/g, ' ').trim();
             return `"${text.replace(/"/g, '""')}"`;
+        }
+
+        generateShareUrl() {
+            const url = new URL(window.location.href);
+            const params = new URLSearchParams();
+            const location = this.locationManager.getLocation();
+            const locationSelect = document.getElementById('location-select');
+            const observationDate = document.getElementById('observation-date')?.value || '';
+            const minAlt = document.getElementById('min-altitude')?.value || '';
+            const timezoneSelect = document.getElementById('timezone-select');
+            const targets = this.targetManager.targets.map(target => ({
+                name: target.name,
+                ra: this.coordinateFormatter.formatRA(target.ra),
+                dec: this.coordinateFormatter.formatDec(target.dec)
+            }));
+
+            params.set('location', locationSelect?.value || 'custom');
+            if (!locationSelect || locationSelect.value === 'custom') {
+                params.set('lat', String(location.lat));
+                params.set('lon', String(location.lon));
+            }
+            if (observationDate) {
+                params.set('date', observationDate);
+            }
+            if (minAlt !== '') {
+                params.set('minAlt', minAlt);
+            }
+            params.set('timeRef', this.timeManager.selectedTimeReference || 'utc');
+            if (timezoneSelect?.value) {
+                params.set('timezone', timezoneSelect.value);
+            }
+            params.set('targets', JSON.stringify(targets));
+
+            url.search = params.toString();
+            url.hash = '';
+            return url.toString();
+        }
+
+        async shareCurrentState() {
+            const shareUrl = this.generateShareUrl();
+
+            try {
+                if (navigator.clipboard?.writeText) {
+                    await navigator.clipboard.writeText(shareUrl);
+                    this.showNotification('Share link copied to clipboard.', 'success');
+                } else {
+                    window.prompt('Copy this share link:', shareUrl);
+                }
+            } catch (error) {
+                console.error('Share link copy failed:', error);
+                window.prompt('Copy this share link:', shareUrl);
+            }
         }
 
         exportTargetsToCsv() {
