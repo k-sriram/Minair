@@ -114,8 +114,11 @@
                         const coords = await this.targetManager.lookupCoordinates(name);
                         if (coords) {
                             // coords: { raHours, decDeg }
-                            document.getElementById('target-ra').value = this.coordinateFormatter.formatRA(coords.raHours);
-                            document.getElementById('target-dec').value = this.coordinateFormatter.formatDec(coords.decDeg);
+                            const targetRaInput = document.getElementById('target-ra');
+                            const targetDecInput = document.getElementById('target-dec');
+                            targetRaInput.value = this.coordinateFormatter.formatRA(coords.raHours);
+                            targetDecInput.value = this.coordinateFormatter.formatDec(coords.decDeg);
+                            targetRaInput.focus();
                             this.showNotification('Coordinates found and filled in.', 'success');
                         } else {
                             this.showNotification('No coordinates found for "' + name + '". Please check the object name.', 'error');
