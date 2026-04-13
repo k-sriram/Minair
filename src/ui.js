@@ -75,8 +75,22 @@
             });
 
             // Enter key handling for form inputs
-            ['target-name', 'target-ra', 'target-dec'].forEach(id => {
-                document.getElementById(id).addEventListener('keypress', (e) => {
+            const targetNameInput = document.getElementById('target-name');
+            const targetRaInput = document.getElementById('target-ra');
+            const targetDecInput = document.getElementById('target-dec');
+
+            targetNameInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const lookupButton = document.getElementById('lookup-target-btn');
+                    if (lookupButton) {
+                        lookupButton.click();
+                    }
+                }
+            });
+
+            [targetRaInput, targetDecInput].forEach(input => {
+                input.addEventListener('keydown', (e) => {
                     if (e.key === 'Enter') {
                         e.preventDefault();
                         this.addNewTarget();
