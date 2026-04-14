@@ -504,7 +504,7 @@
 
         parseSharedState() {
             const params = new URLSearchParams(window.location.search);
-            const relevantKeys = ['location', 'lat', 'lon', 'date', 'minAlt', 'timeRef', 'timezone', 'targets'];
+            const relevantKeys = ['location', 'lat', 'lon', 'date', 'minAlt', 'timeRef', 'timezone', 'targets', 'selected'];
             const hasRelevantParams = relevantKeys.some(key => params.has(key));
 
             if (!hasRelevantParams) {
@@ -523,6 +523,17 @@
                 }
             }
 
+            let selectedIndices = [];
+            let selectedProvided = false;
+            if (params.has('selected')) {
+                selectedProvided = true;
+                const selectedParam = params.get('selected') || '';
+                selectedIndices = selectedParam
+                    .split(',')
+                    .map(value => parseInt(value, 10))
+                    .filter(index => Number.isInteger(index) && index >= 0);
+            }
+
             return {
                 location: params.get('location'),
                 lat: params.get('lat'),
@@ -532,7 +543,9 @@
                 timeRef: params.get('timeRef'),
                 timezone: params.get('timezone'),
                 targets,
-                targetsProvided
+                targetsProvided,
+                selectedIndices,
+                selectedProvided
             };
         }
 
@@ -608,6 +621,20 @@
                         }
                     });
                 }
+
+                if (sharedState.selectedProvided) {
+                    const selectedIds = new Set();
+                    sharedState.selectedIndices.forEach(index => {
+                        const target = this.targetManager.targets[index];
+                        if (target) {
+                            selectedIds.add(String(target.id));
+                        }
+                    });
+
+                    this.targetManager.selectedTargetIds = new Set(selectedIds);
+                    this.targetManager.saveSelectedTargetIdsToStorage(selectedIds);
+                    this.targetManager.updateTargetTable();
+                }
             }
 
             this.targetManager.updateRiseSetTimes();
@@ -633,6 +660,10 @@
                 ra: this.coordinateFormatter.formatRA(target.ra),
                 dec: this.coordinateFormatter.formatDec(target.dec)
             }));
+            const selectedIndices = this.targetManager.targets
+                .map((target, index) => ({ target, index }))
+                .filter(({ target }) => this.targetManager.selectedTargetIds.has(String(target.id)))
+                .map(({ index }) => index);
 
             params.set('location', locationSelect?.value || 'custom');
             if (!locationSelect || locationSelect.value === 'custom') {
@@ -650,6 +681,7 @@
                 params.set('timezone', timezoneSelect.value);
             }
             params.set('targets', JSON.stringify(targets));
+            params.set('selected', selectedIndices.join(','));
 
             url.search = params.toString();
             url.hash = '';
