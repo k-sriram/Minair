@@ -16,6 +16,7 @@ export class TargetManager {
         this.targets = [];
         this.locationManager = null;
         this.timeManager = null;
+        this.selectedTargetIds = new Set();
         this.clearButton = null;
         this.initialized = false;
     }
@@ -48,6 +49,75 @@ export class TargetManager {
             console.warn('Failed to load targets from localStorage:', error);
             return [];
         }
+    }
+
+    saveSelectedTargetIdsToStorage(selectedIds) {
+        try {
+            localStorage.setItem('minair-selected-target-ids', JSON.stringify(Array.from(selectedIds)));
+        } catch (error) {
+            console.warn('Failed to save selected target IDs to localStorage:', error);
+        }
+    }
+
+    getSelectedTargetIds() {
+        return new Set(this.selectedTargetIds);
+    }
+
+    loadSelectedTargetIdsFromStorage() {
+        try {
+            const saved = localStorage.getItem('minair-selected-target-ids');
+            if (!saved) {
+                return new Set();
+            }
+            const parsed = JSON.parse(saved);
+            if (!Array.isArray(parsed)) {
+                return new Set();
+            }
+            return new Set(parsed.map(id => String(id)));
+        } catch (error) {
+            console.warn('Failed to load selected target IDs from localStorage:', error);
+            return new Set();
+        }
+    }
+
+    getSelectedTargetIdsFromTable() {
+        const tbody = document.getElementById('target-table-body');
+        const selected = new Set();
+        if (!tbody) {
+            return selected;
+        }
+
+        tbody.querySelectorAll('tr.target-selected').forEach(row => {
+            const targetId = row.getAttribute('data-target-id');
+            if (targetId) {
+                selected.add(String(targetId));
+            }
+        });
+
+        return selected;
+    }
+
+    syncPlotSelectionFromIds(selectedIdStrings) {
+        if (!window.minairApp || !window.minairApp.plotManager) {
+            return;
+        }
+
+        const plotManager = window.minairApp.plotManager;
+        plotManager.selectedTargets.clear();
+
+        selectedIdStrings.forEach(idString => {
+            const target = this.targets.find(t => String(t.id) === idString);
+            if (target) {
+                plotManager.selectedTargets.add(target.id);
+            }
+        });
+    }
+
+    persistSelectionFromTable() {
+        const selectedIds = this.getSelectedTargetIdsFromTable();
+        this.selectedTargetIds = new Set(selectedIds);
+        this.saveSelectedTargetIdsToStorage(selectedIds);
+        this.updateClearButtonState();
     }
 
     async loadDefaultTargets() {
@@ -139,13 +209,14 @@ export class TargetManager {
         const tbody = document.getElementById('target-table-body');
 
         // Preserve selection state before clearing table
-        const selectedTargetIds = new Set();
-        tbody.querySelectorAll('tr.target-selected').forEach(row => {
-            const targetId = row.getAttribute('data-target-id');
-            if (targetId) {
-                selectedTargetIds.add(targetId);
-            }
-        });
+        let selectedTargetIds = this.getSelectedTargetIdsFromTable();
+        if (selectedTargetIds.size === 0) {
+            selectedTargetIds = this.loadSelectedTargetIdsFromStorage();
+        }
+
+        const validTargetIds = new Set(this.targets.map(target => String(target.id)));
+        selectedTargetIds = new Set(Array.from(selectedTargetIds).filter(id => validTargetIds.has(id)));
+        this.selectedTargetIds = new Set(selectedTargetIds);
 
         tbody.innerHTML = '';
 
@@ -159,6 +230,8 @@ export class TargetManager {
 
             tbody.appendChild(row);
         });
+
+        this.saveSelectedTargetIdsToStorage(selectedTargetIds);
         this.updateClearButtonState();
     }
 
@@ -218,7 +291,7 @@ export class TargetManager {
                 window.minairApp.plotManager.toggleTarget(target.id);
                 row.classList.toggle('target-selected');
             }
-            this.updateClearButtonState();
+            this.persistSelectionFromTable();
         });
 
         return row;
@@ -322,6 +395,19 @@ export class TargetManager {
     // Returns { raHours, decDeg }
     async lookupCoordinates(name) {
         return await window.MinairCatalog.lookupCoordinates(name);
+    }
+
+    clearSelectedTargets() {
+        const tbody = document.getElementById('target-table-body');
+        if (tbody) {
+            tbody.querySelectorAll('tr.target-selected').forEach(row => {
+                row.classList.remove('target-selected');
+            });
+        }
+
+        this.selectedTargetIds = new Set();
+        this.saveSelectedTargetIdsToStorage(new Set());
+        this.updateClearButtonState();
     }
 
 

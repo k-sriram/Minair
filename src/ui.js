@@ -168,11 +168,6 @@
             // Plot controls
             document.getElementById('plot-clear-selection')?.addEventListener('click', () => {
                 this.plotManager.clearSelection();
-                // Also clear selection from target table rows
-                document.querySelectorAll('.target-selected').forEach(row => {
-                    row.classList.remove('target-selected');
-                });
-                document.getElementById('plot-clear-selection').disabled = true;
             });
 
             document.getElementById('plot-refresh')?.addEventListener('click', () => {

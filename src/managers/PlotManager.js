@@ -138,6 +138,9 @@ export class PlotManager {
         this.startTime = null;
         this.endTime = null;
 
+        const syncedSelectedTargets = this.syncSelectedTargetsFromTargetManager();
+        const hasSelection = syncedSelectedTargets.size > 0;
+
         // Calculate altitude data for each target
         targets.forEach((target, index) => {
             try {
@@ -168,7 +171,7 @@ export class PlotManager {
                     times: trimmedTimes,
                     altitudes: trimmedAlts,
                     color: this.plotConfig.targetColors[index % this.plotConfig.targetColors.length],
-                    visible: this.selectedTargets.has(target.id) || this.selectedTargets.size === 0
+                    visible: !hasSelection || syncedSelectedTargets.has(target.id)
                 });
 
                 // Set plot time range
@@ -184,6 +187,30 @@ export class PlotManager {
         });
 
         this.redraw();
+    }
+
+    syncSelectedTargetsFromTargetManager() {
+        const syncedTargets = new Set();
+
+        if (!this.targetManager || typeof this.targetManager.getSelectedTargetIds !== 'function') {
+            this.selectedTargets = syncedTargets;
+            return syncedTargets;
+        }
+
+        const selectedIdStrings = this.targetManager.getSelectedTargetIds();
+        if (!selectedIdStrings || selectedIdStrings.size === 0) {
+            this.selectedTargets = syncedTargets;
+            return syncedTargets;
+        }
+
+        this.targetManager.targets.forEach(target => {
+            if (selectedIdStrings.has(String(target.id))) {
+                syncedTargets.add(target.id);
+            }
+        });
+
+        this.selectedTargets = syncedTargets;
+        return syncedTargets;
     }
 
     toggleTarget(targetId, forceAction = null) {
@@ -212,6 +239,7 @@ export class PlotManager {
             this.selectedTargets.delete(targetId);
             this.targetData.delete(targetId);
         });
+
         this.redraw();
     }
 
@@ -221,6 +249,11 @@ export class PlotManager {
         for (const data of this.targetData.values()) {
             data.visible = true;
         }
+
+        if (this.targetManager && typeof this.targetManager.clearSelectedTargets === 'function') {
+            this.targetManager.clearSelectedTargets();
+        }
+
         this.redraw();
     }
 
