@@ -79,8 +79,10 @@ SOFTWARE.
                     <div class="number-input-wrapper">
                         <input type="text" id="min-altitude" value="30" data-min="0" data-max="90" tabindex="6" />
                         <div class="number-spinner">
-                            <button type="button" class="spinner-btn" data-action="increment" tabindex="7">▲</button>
-                            <button type="button" class="spinner-btn" data-action="decrement" tabindex="8">▼</button>
+                            <button type="button" class="spinner-btn" data-action="increment"
+                                title="Increase minimum altitude" tabindex="7">▲</button>
+                            <button type="button" class="spinner-btn" data-action="decrement"
+                                title="Decrease minimum altitude" tabindex="8">▼</button>
                         </div>
                     </div>
                 </div>
@@ -99,16 +101,18 @@ SOFTWARE.
     <!-- Time Display Section -->
     <section class="time-display">
         <div class="clock-container">
-            <button class="time-clock" id="utc-clock" data-timezone="utc" tabindex="10">
+            <button class="time-clock" id="utc-clock" data-timezone="utc" title="Use UTC time reference" tabindex="10">
                 <div class="time-label">UTC</div>
                 <div class="time-value" id="utc-time">--:--:--</div>
             </button>
 
-            <button class="time-clock" id="lst-clock" data-timezone="lst" tabindex="11">
+            <button class="time-clock" id="lst-clock" data-timezone="lst" title="Use local sidereal time reference"
+                tabindex="11">
                 <div class="time-label">LST</div>
                 <div class="time-value" id="lst-time">--:--:--</div>
             </button>
-            <button class="time-clock" id="user-clock" data-timezone="user" tabindex="12">
+            <button class="time-clock" id="user-clock" data-timezone="user" title="Use selected user timezone"
+                tabindex="12">
                 <div class="time-label">
                     <select id="timezone-select" class="timezone-dropdown">
                         <option value="UTC-12">UTC-12:00</option>
@@ -164,7 +168,8 @@ SOFTWARE.
         <div class="plot-header">
             <h2>Altitude vs Time</h2>
             <div class="plot-controls">
-                <button id="plot-refresh" class="btn btn-secondary"><i data-feather="refresh-cw"></i></button>
+                <button id="plot-refresh" class="btn btn-secondary" title="Refresh plot"><i
+                        data-feather="refresh-cw"></i></button>
             </div>
         </div>
         <div class="plot-container">
@@ -177,10 +182,13 @@ SOFTWARE.
         <div class="target-header">
             <h2>Observation Targets</h2>
             <div class="target-controls">
-                <button id="plot-clear-selection" class="btn btn-secondary">Clear Selection</button>
-                <button id="target-export-csv" class="btn btn-secondary">Export CSV</button>
-                <button id="target-share-link" class="btn btn-secondary">Share Link</button>
-                <button id="target-remove-all" class="btn btn-secondary">Remove All</button>
+                <button id="plot-clear-selection" class="btn btn-secondary" title="Clear selected targets">Clear
+                    Selection</button>
+                <button id="target-export-csv" class="btn btn-secondary"
+                    title="Export the current target table to CSV">Export CSV</button>
+                <button id="target-share-link" class="btn btn-secondary"
+                    title="Copy a shareable link for the current state">Share Link</button>
+                <button id="target-remove-all" class="btn btn-secondary" title="Remove all targets">Remove All</button>
             </div>
         </div>
 
@@ -188,16 +196,16 @@ SOFTWARE.
             <table class="target-table" id="target-table">
                 <thead>
                     <tr>
-                        <th>Name</th>
-                        <th>RA</th>
-                        <th>Dec</th>
-                        <th>Current Alt</th>
-                        <th>Current Az</th>
-                        <th>Hour Angle</th>
-                        <th>Airmass</th>
-                        <th>Rise Time</th>
-                        <th>Set Time</th>
-                        <th>Actions</th>
+                        <th title="Target name">Name</th>
+                        <th title="Right ascension">RA</th>
+                        <th title="Declination">Dec</th>
+                        <th title="Current altitude above the horizon">Current Alt</th>
+                        <th title="Current azimuth">Current Az</th>
+                        <th title="Hour angle relative to the local meridian">Hour Angle</th>
+                        <th title="Airmass at the current time">Airmass</th>
+                        <th title="Estimated rise time">Rise Time</th>
+                        <th title="Estimated set time">Set Time</th>
+                        <th title="Row actions">Actions</th>
                     </tr>
                 </thead>
                 <tbody id="target-table-body">
@@ -210,12 +218,13 @@ SOFTWARE.
         <div class="add-target-form" id="add-target-form">
             <div class="form-row">
                 <input type="text" id="target-name" placeholder="Target Name" />
-                <button id="lookup-target-btn" class="btn btn-secondary" title="Query SIMBAD for coordinates"><i
-                        data-feather="search"></i></button>
+                <button id="lookup-target-btn" class="btn btn-secondary" title="Query SIMBAD for coordinates"
+                    aria-label="Lookup target coordinates"><i data-feather="search"></i></button>
                 <input type="text" id="target-ra" placeholder="RA (12:34:56, 12h34m56s, 12 34 56, 123456, 185.25°)" />
                 <input type="text" id="target-dec"
                     placeholder="Dec (+12:34:56, 12d34m56s, -12 34 56, +123456, -25.75°)" />
-                <button id="add-target-btn" class="btn btn-primary"><i data-feather="plus"></i></button>
+                <button id="add-target-btn" class="btn btn-primary" title="Add target" aria-label="Add target"><i
+                        data-feather="plus"></i></button>
             </div>
         </div>
     </section>

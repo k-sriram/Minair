@@ -270,7 +270,7 @@ export class TargetManager {
             <td class="cell-rise">--:--</td>
             <td class="cell-set">--:--</td>
             <td class="cell-actions">
-                <button class="btn btn-secondary" data-target-id="${target.id}">${Icons.trash}</button>
+                <button class="btn btn-secondary" data-target-id="${target.id}" title="Remove target ${target.name}" aria-label="Remove target ${target.name}">${Icons.trash}</button>
             </td>
         `;
 

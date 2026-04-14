@@ -804,6 +804,7 @@
             closeButton.className = 'notification-close';
             closeButton.innerHTML = this.icons.x;
             closeButton.setAttribute('aria-label', 'Close notification');
+            closeButton.title = 'Close notification';
 
             // Assemble notification
             notification.appendChild(messageSpan);

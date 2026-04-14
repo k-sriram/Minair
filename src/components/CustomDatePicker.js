@@ -41,6 +41,7 @@ export class CustomDatePicker {
         arrow.className = 'date-picker-arrow';
         arrow.innerHTML = Icons.calendar; // Pre-calculated calendar icon
         arrow.setAttribute('aria-label', 'Open calendar'); toggle.appendChild(dateInput);
+        arrow.setAttribute('title', 'Open calendar');
         toggle.appendChild(arrow);
 
         const calendar = document.createElement('div');
@@ -88,6 +89,7 @@ export class CustomDatePicker {
         prevBtn.className = 'calendar-nav-btn';
         prevBtn.textContent = '‹';
         prevBtn.setAttribute('data-action', 'prev-month');
+        prevBtn.setAttribute('title', 'Previous month');
 
         const monthYear = document.createElement('span');
         monthYear.className = 'calendar-month-year';
@@ -100,6 +102,7 @@ export class CustomDatePicker {
         nextBtn.className = 'calendar-nav-btn';
         nextBtn.textContent = '›';
         nextBtn.setAttribute('data-action', 'next-month');
+        nextBtn.setAttribute('title', 'Next month');
 
         header.appendChild(prevBtn);
         header.appendChild(monthYear);
@@ -139,6 +142,7 @@ export class CustomDatePicker {
                 String(date.getMonth() + 1).padStart(2, '0') + '-' +
                 String(date.getDate()).padStart(2, '0');
             dayEl.setAttribute('data-date', dateStr);
+            dayEl.setAttribute('title', date.toLocaleDateString('en-CA'));
 
             if (date.getMonth() !== month) {
                 dayEl.classList.add('other-month');
