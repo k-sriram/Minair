@@ -32,8 +32,6 @@ SOFTWARE.
     <link rel="icon" type="image/x-icon" href="favicon.ico">
     <link rel="icon" type="image/png" href="favicon.png">
     <link rel="stylesheet" href="styles.css">
-    <script src="https://unpkg.com/feather-icons"></script>
-    <script src="https://unpkg.com/feather-icons"></script>
 </head>
 
 <body>
@@ -61,7 +59,7 @@ SOFTWARE.
                         <label for="geolocation-btn" style="visibility: hidden;">A</label>
                         <button id="geolocation-btn" class="btn-geolocation full-width btn-secondary btn" type="button"
                             aria-label="Use my current location" title="Use my current location" tabindex="4">
-                            <i data-feather="map-pin"></i>
+                            <i data-icon="map-pin"></i>
                         </button>
                     </div>
                 </div>
@@ -168,8 +166,9 @@ SOFTWARE.
         <div class="plot-header">
             <h2>Altitude vs Time</h2>
             <div class="plot-controls">
-                <button id="plot-refresh" class="btn btn-secondary" title="Refresh plot"><i
-                        data-feather="refresh-cw"></i></button>
+                <button id="plot-refresh" class="btn btn-secondary" title="Refresh plot">
+                    <i data-icon="refresh-cw"></i>
+                </button>
             </div>
         </div>
         <div class="plot-container">
@@ -219,12 +218,15 @@ SOFTWARE.
             <div class="form-row">
                 <input type="text" id="target-name" placeholder="Target Name" />
                 <button id="lookup-target-btn" class="btn btn-secondary" title="Query SIMBAD for coordinates"
-                    aria-label="Lookup target coordinates"><i data-feather="search"></i></button>
+                    aria-label="Lookup target coordinates">
+                    <i data-icon="search"></i>
+                </button>
                 <input type="text" id="target-ra" placeholder="RA (12:34:56, 12h34m56s, 12 34 56, 123456, 185.25°)" />
                 <input type="text" id="target-dec"
                     placeholder="Dec (+12:34:56, 12d34m56s, -12 34 56, +123456, -25.75°)" />
-                <button id="add-target-btn" class="btn btn-primary" title="Add target" aria-label="Add target"><i
-                        data-feather="plus"></i></button>
+                <button id="add-target-btn" class="btn btn-primary" title="Add target" aria-label="Add target">
+                    <i data-icon="plus"></i>
+                </button>
             </div>
         </div>
     </section>
@@ -241,12 +243,6 @@ SOFTWARE.
     <script src="src/catalog.js"></script>
     <script type="module" src="src/modules.js"></script>
     <script src="src/ui.js"></script>
-    <script>
-        // Initialize Feather icons after page load
-        document.addEventListener('DOMContentLoaded', () => {
-            feather.replace();
-        });
-    </script>
 </body>
 
 </html>

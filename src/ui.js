@@ -11,6 +11,17 @@
         throw new Error('Modules not loaded yet');
     }
 
+    function replaceIconPlaceholders() {
+        const modules = getManagers();
+        document.querySelectorAll('[data-icon]').forEach((node) => {
+            const iconName = node.getAttribute('data-icon');
+            const iconSvg = modules.Icons.getIcon(iconName);
+            if (iconSvg) {
+                node.outerHTML = iconSvg;
+            }
+        });
+    }
+
 
 
     // Main Application Controller
@@ -902,6 +913,7 @@
     window.addEventListener('modulesLoaded', () => {
         modulesLoaded = true;
         tryInitialize();
+        replaceIconPlaceholders();
     });
 
 })();

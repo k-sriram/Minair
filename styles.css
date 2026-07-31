@@ -931,7 +931,7 @@ input[type="number"] {
 }
 
 .btn:has(svg):not(:has(* + svg)):not(:has(svg + *)),
-.btn:has(i[data-feather]):not(:has(* + i)):not(:has(i + *)) {
+.btn:has(i[data-icon]):not(:has(* + i)):not(:has(i + *)) {
     padding: 0.5rem;
     line-height: 1;
     display: flex;

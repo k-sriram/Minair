@@ -58,6 +58,15 @@ const [
         Icons
     };
 
+    // Replace any icon placeholders in the static HTML with the shared SVGs.
+    document.querySelectorAll('[data-icon]').forEach((node) => {
+        const iconName = node.getAttribute('data-icon');
+        const iconSvg = Icons.getIcon(iconName);
+        if (iconSvg) {
+            node.outerHTML = iconSvg;
+        }
+    });
+
     // Signal that modules are loaded
     window.dispatchEvent(new CustomEvent('modulesLoaded'));
 })();
