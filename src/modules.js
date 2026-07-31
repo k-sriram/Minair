@@ -14,21 +14,33 @@
         }
     }
 
-    // Load all managers and utilities
-    const ThemeManager = await loadModule('./managers/ThemeManager.js', 'ThemeManager');
-    const LocationManager = await loadModule('./managers/LocationManager.js', 'LocationManager');
-    const TimeManager = await loadModule('./managers/TimeManager.js', 'TimeManager');
-    const TargetManager = await loadModule('./managers/TargetManager.js', 'TargetManager');
-    const PlotManager = await loadModule('./managers/PlotManager.js', 'PlotManager');
-    const CustomDropdown = await loadModule('./components/CustomDropdown.js', 'CustomDropdown');
-    const CustomNumberInput = await loadModule('./components/CustomNumberInput.js', 'CustomNumberInput');
-    const CustomDatePicker = await loadModule('./components/CustomDatePicker.js', 'CustomDatePicker');
-
-    // Load utilities
-    const CoordinateParser = await loadModule('./utils/CoordinateParser.js', 'parseCoordinate');
-    const CoordinateFormatter = await import('./utils/CoordinateFormatter.js');
-    const TimeConverter = await loadModule('./utils/TimeConverter.js', 'formatDateHHMMWithTimeZone');
-    const Icons = await import('./utils/Icons.js');
+const [
+    { ThemeManager },
+    { LocationManager },
+    { TimeManager },
+    { TargetManager },
+    { PlotManager },
+    { CustomDropdown },
+    { CustomNumberInput },
+    { CustomDatePicker },
+    { parseCoordinate: CoordinateParser },
+    CoordinateFormatter,
+    { formatDateHHMMWithTimeZone: TimeConverter },
+    Icons
+] = await Promise.all([
+    import('./managers/ThemeManager.js'),
+    import('./managers/LocationManager.js'),
+    import('./managers/TimeManager.js'),
+    import('./managers/TargetManager.js'),
+    import('./managers/PlotManager.js'),
+    import('./components/CustomDropdown.js'),
+    import('./components/CustomNumberInput.js'),
+    import('./components/CustomDatePicker.js'),
+    import('./utils/CoordinateParser.js'),
+    import('./utils/CoordinateFormatter.js'),
+    import('./utils/TimeConverter.js'),
+    import('./utils/Icons.js')
+]);
 
     // Make them available globally for the main app
     window.MinairModules = {
